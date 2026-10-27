@@ -10,6 +10,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.springframework.stereotype.Service;
 
+import java.awt.GraphicsEnvironment;
 import java.awt.Point;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,12 +28,15 @@ public class RecordingService implements NativeMouseInputListener, NativeKeyList
     private boolean ctrlPressed = false;
     private boolean winPressed = false;
 
-    // --- SNIPER MODE VARIABLES ---
     private boolean isSingleClickCapture = false;
     private CompletableFuture<Point> singleClickFuture;
 
     @PostConstruct
     public void init() {
+        if (GraphicsEnvironment.isHeadless()) {
+            System.out.println("[!] Headless mode: JNativeHook disabled (Master Server).");
+            return;
+        }
         try {
             GlobalScreen.registerNativeHook();
             GlobalScreen.addNativeMouseListener(this);
@@ -45,14 +49,12 @@ public class RecordingService implements NativeMouseInputListener, NativeKeyList
 
     @PreDestroy
     public void cleanup() {
+        if (GraphicsEnvironment.isHeadless()) return;
         try {
             GlobalScreen.unregisterNativeHook();
         } catch (Exception e) {}
     }
 
-    // ==========================================
-    // SNIPER MODE (CAPTURE 1 CLICK)
-    // ==========================================
     public CompletableFuture<Point> captureSingleClick() {
         this.isSingleClickCapture = true;
         this.singleClickFuture = new CompletableFuture<>();
@@ -60,9 +62,6 @@ public class RecordingService implements NativeMouseInputListener, NativeKeyList
         return this.singleClickFuture;
     }
 
-    // ==========================================
-    // NORMAL RECORDING
-    // ==========================================
     public void startRecording() {
         currentRecording.clear();
         textBuffer.setLength(0);
@@ -101,17 +100,15 @@ public class RecordingService implements NativeMouseInputListener, NativeKeyList
 
     @Override
     public void nativeMouseClicked(NativeMouseEvent e) {
-        // --- SNIPER MODE LOGIC ---
         if (isSingleClickCapture) {
             isSingleClickCapture = false;
             if (singleClickFuture != null) {
                 singleClickFuture.complete(new Point(e.getX(), e.getY()));
                 System.out.println("[🎯] Target Acquired -> X: " + e.getX() + " | Y: " + e.getY());
             }
-            return; // Man-kmmlouch l'enregistrement l'3adi
+            return;
         }
 
-        // --- NORMAL RECORDING LOGIC ---
         if (isRecording) {
             flushTextBuffer();
             long currentTime = System.currentTimeMillis();
@@ -142,7 +139,7 @@ public class RecordingService implements NativeMouseInputListener, NativeKeyList
         else if (ctrlPressed && e.getKeyCode() == NativeKeyEvent.VC_V) actionToRecord = "CTRL_V";
         else if (ctrlPressed && e.getKeyCode() == NativeKeyEvent.VC_A) actionToRecord = "CTRL_A";
         else if (ctrlPressed && e.getKeyCode() == NativeKeyEvent.VC_HOME) actionToRecord = "CTRL_HOME";
-        else if (ctrlPressed && e.getKeyCode() == NativeKeyEvent.VC_L) actionToRecord = "CTRL_L"; // ZEDNA CTRL+L HNA
+        else if (ctrlPressed && e.getKeyCode() == NativeKeyEvent.VC_L) actionToRecord = "CTRL_L";
         else if (winPressed && e.getKeyCode() == NativeKeyEvent.VC_UP) actionToRecord = "WIN_UP";
         else if (e.getKeyCode() == NativeKeyEvent.VC_ENTER) actionToRecord = "ENTER";
         else if (e.getKeyCode() == NativeKeyEvent.VC_ESCAPE) actionToRecord = "ESC";

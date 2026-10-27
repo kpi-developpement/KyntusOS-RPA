@@ -14,6 +14,17 @@ services:
       - pgdata:/var/lib/postgresql/data
     restart: unless-stopped
 
+  nexus-api:
+    build:
+      context: ../
+      dockerfile: Dockerfile.api
+    container_name: nexus_master_api
+    ports:
+      - "9833:9833"
+    restart: unless-stopped
+    depends_on:
+      - postgres
+
   nexus-web:
     build:
       context: .
@@ -26,7 +37,7 @@ services:
       - PORT=3644
     restart: unless-stopped
     depends_on:
-      - postgres
+      - nexus-api
 
 volumes:
   pgdata:

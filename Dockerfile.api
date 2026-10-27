@@ -1,0 +1,15 @@
+# Dockerfile.api - Spring Boot Master Backend
+FROM maven:3.9.6-eclipse-temurin-21-alpine AS builder
+WORKDIR /app
+COPY RPA/pom.xml .
+# Download dependencies
+RUN mvn dependency:go-offline -B
+COPY RPA/src ./src
+# Build the application
+RUN mvn clean package -DskipTests
+
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+COPY --from=builder /app/target/*.jar app.jar
+EXPOSE 9833
+ENTRYPOINT ["java", "-jar", "app.jar"]

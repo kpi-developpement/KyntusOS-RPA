@@ -11,13 +11,12 @@ import java.sql.Statement;
 @SpringBootApplication
 public class NexusRpaApplication {
     public static void main(String[] args) {
-        System.setProperty("java.awt.headless", "false");
+        // 7yedna headless="false" bach y-khdem f Docker (Linux) bla machakil
         ensureDedicatedDatabaseExists();
         SpringApplication.run(NexusRpaApplication.class, args);
     }
 
     private static void ensureDedicatedDatabaseExists() {
-        // Pointing to Master Server IP with new Port 5454
         String pgBaseUrl = "jdbc:postgresql://10.10.10.25:5454/postgres";
         String user = "kyntus_user";
         String pass = "kyntus_password";

@@ -18,14 +18,19 @@ public class RobotActionExecutor {
     public RobotActionExecutor(RpaContextManager contextManager) {
         this.contextManager = contextManager;
         try {
-            this.robot = new Robot();
-            this.robot.setAutoDelay(15);
-        } catch (AWTException e) {
+            if (!GraphicsEnvironment.isHeadless()) {
+                this.robot = new Robot();
+                this.robot.setAutoDelay(15);
+            } else {
+                System.out.println("[!] Running in HEADLESS mode (Master Server). Robot physical execution disabled.");
+            }
+        } catch (Exception e) {
             System.err.println("Failed to initialize Robot: " + e.getMessage());
         }
     }
 
     public void mouseClick(int x, int y) {
+        if (robot == null) return;
         robot.mouseMove(x, y);
         robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
         sleep(60);
@@ -33,6 +38,7 @@ public class RobotActionExecutor {
     }
 
     public void pasteText(String text) {
+        if (robot == null) return;
         try {
             StringSelection stringSelection = new StringSelection(text);
             Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
@@ -53,7 +59,7 @@ public class RobotActionExecutor {
     }
 
     public void typeKeyboardDirect(String text) {
-        if (text == null) return;
+        if (robot == null || text == null) return;
         for (char c : text.toCharArray()) {
             int keyCode = KeyEvent.getExtendedKeyCodeForChar(c);
             if (KeyEvent.CHAR_UNDEFINED == keyCode) {
@@ -84,6 +90,7 @@ public class RobotActionExecutor {
     }
 
     public void focusWindowOS(String titleKeyword) {
+        if (robot == null) return;
         try {
             System.out.println("[*] Attempting OS Focus on window matching: " + titleKeyword);
             String psCommand = "$w = Get-Process | Where-Object { $_.MainWindowTitle -like '*" + titleKeyword + "*' } | Select-Object -First 1; " +
@@ -96,19 +103,15 @@ public class RobotActionExecutor {
         }
     }
 
-    // =========================================================================
-    // FIX COMPLEET: ALT+SPACE -> 5x FLÈCHE BAS -> ENTER -> ESCAPE DE SÉCURITÉ
-    // =========================================================================
     public void forceMaximizeFrenchWindow() {
+        if (robot == null) return;
         System.out.println("[🪟] Executing Force Maximize (Alt+Space -> 5x Down -> Enter)...");
 
-        // 1. T-t2kked bli makayn 7ta modifier m-cliki f Windows
         robot.keyRelease(KeyEvent.VK_ALT);
         robot.keyRelease(KeyEvent.VK_CONTROL);
         robot.keyRelease(KeyEvent.VK_SHIFT);
         sleep(100);
 
-        // 2. Alt + Space bash t7ell l-menu système
         robot.keyPress(KeyEvent.VK_ALT);
         sleep(70);
         robot.keyPress(KeyEvent.VK_SPACE);
@@ -117,10 +120,8 @@ public class RobotActionExecutor {
         sleep(50);
         robot.keyRelease(KeyEvent.VK_ALT);
 
-        // Délai darouri bash Windows y-dessini l-menu mzyan w y-lâchi l'état dyal Alt
         sleep(450);
 
-        // 3. Parcourir 5 fois b Sahm l-te7t b ryatme nqi
         for (int i = 1; i <= 5; i++) {
             robot.keyPress(KeyEvent.VK_DOWN);
             sleep(60);
@@ -128,25 +129,20 @@ public class RobotActionExecutor {
             sleep(90);
         }
 
-        // 4. Valider b Entrée
         robot.keyPress(KeyEvent.VK_ENTER);
         sleep(100);
         robot.keyRelease(KeyEvent.VK_ENTER);
 
-        // Délai bash l-fenêtre t-kber w t-mchi l-menu
         sleep(500);
 
-        // 5. SAFETY NET: Ila bqat l-menu m3llqa, had l-Escape kay-ferg3ha f l-blasa
-        // bash ma t-bloquich l-focus dyal Tab w l-User/Password !
         robot.keyPress(KeyEvent.VK_ESCAPE);
         sleep(50);
         robot.keyRelease(KeyEvent.VK_ESCAPE);
         sleep(200);
-
-        System.out.println("[+] Maximize sequence completed and menu dismissed.");
     }
 
     public void handleExcelClipboardPrompt() {
+        if (robot == null) return;
         System.out.println("[📋] Checking for Excel Clipboard large data prompt...");
         sleep(500);
         robot.keyPress(KeyEvent.VK_ENTER);
@@ -160,6 +156,7 @@ public class RobotActionExecutor {
     }
 
     public void handleSmartMigLogin(String customCredentials) {
+        if (robot == null) return;
         String username = "robot";
         String password = "scraperrobot";
 
@@ -268,7 +265,7 @@ public class RobotActionExecutor {
     }
 
     public void executeSpecialAction(String actionName) {
-        if (actionName == null) return;
+        if (robot == null || actionName == null) return;
         switch (actionName.toUpperCase()) {
             case "MAXIMIZE_WINDOW":
             case "FORCE_MAXIMIZE_FRENCH":
