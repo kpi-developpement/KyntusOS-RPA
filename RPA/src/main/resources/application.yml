@@ -17,13 +17,6 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: false
 
-# URL dyal l'ancienne DB ghir bach DatabaseSeeder y-recuperi lik douk 9 templates automatiquement
-nexus:
-  legacy-db:
-    url: jdbc:postgresql://10.10.10.25:5454/kyntus_db
-    username: kyntus_user
-    password: kyntus_password
-
 jwt:
   secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
   expiration: 86400000 # 1 Day in milliseconds

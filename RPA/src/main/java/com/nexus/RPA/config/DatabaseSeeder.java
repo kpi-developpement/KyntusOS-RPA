@@ -44,18 +44,19 @@ public class DatabaseSeeder implements CommandLineRunner {
             return userRepository.save(newAdmin);
         });
 
-        // 2. MIGRATE OLD DATA (Users & Templates) FROM LOCAL PC (10.10.10.50) OR OLD SERVER
+        // 2. MIGRATE OLD DATA (Users & Templates) FROM YOUR LOCAL PC DB
         migrateOldData(admin);
 
         System.out.println("[✓] Migration Complete. Total Users: " + userRepository.count() + " | Total Templates: " + templateRepository.count());
     }
 
     private void migrateOldData(UserEntity admin) {
-        // We will scan both the local PC (where you worked before) and the server itself
+        // Hna ghadi y-9leb f l'DB l9dima dyalek li fiha l'khedma (f l'PC 10.10.10.50)
         String[][] oldDatabases = {
-                {"jdbc:postgresql://10.10.10.50:5432/kyntus_db", "kyntus_user", "kyntus_password"},
-                {"jdbc:postgresql://10.10.10.50:5432/postgres", "postgres", "postgres"},
-                {"jdbc:postgresql://10.10.10.25:5454/kyntus_db", "kyntus_user", "kyntus_password"}
+                // Ila kan Spring Boot khdam f l'PC Physique, ghadi y-l9a l'DB f localhost
+                {"jdbc:postgresql://localhost:5432/nexus_rpa_db", "kyntus_user", "kyntus_password"},
+                // Ila kan Spring Boot khdam f l'Serveur, ghadi y-7awel y-tconnecta l'PC Physique
+                {"jdbc:postgresql://10.10.10.50:5432/nexus_rpa_db", "kyntus_user", "kyntus_password"}
         };
 
         Set<String> existingUsers = userRepository.findAll().stream()
@@ -72,7 +73,7 @@ public class DatabaseSeeder implements CommandLineRunner {
             String pass = dbConfig[2];
 
             try (Connection conn = DriverManager.getConnection(url, user, pass)) {
-                System.out.println("[*] Connected to old DB for migration: " + url);
+                System.out.println("[*] Connected to OLD DB for migration: " + url);
 
                 // --- MIGRATE USERS ---
                 try (PreparedStatement psU = conn.prepareStatement("SELECT * FROM users");
@@ -90,10 +91,10 @@ public class DatabaseSeeder implements CommandLineRunner {
                         }
                     }
                 } catch (Exception e) {
-                    System.out.println("   [-] No users table found in " + url);
+                    System.out.println("   [-] No users table found or error: " + e.getMessage());
                 }
 
-                // --- MIGRATE TEMPLATES ---
+                // --- MIGRATE TEMPLATES (Including the 350 steps one!) ---
                 try (PreparedStatement psT = conn.prepareStatement("SELECT * FROM templates ORDER BY id ASC");
                      ResultSet rsT = psT.executeQuery()) {
                     while (rsT.next()) {
@@ -105,7 +106,6 @@ public class DatabaseSeeder implements CommandLineRunner {
                         long oldUserId = rsT.getLong("user_id");
                         UserEntity owner = admin;
                         if (!rsT.wasNull()) {
-                            // Find username of old user to link to new user
                             try (PreparedStatement psOwner = conn.prepareStatement("SELECT username FROM users WHERE id = ?")) {
                                 psOwner.setLong(1, oldUserId);
                                 try (ResultSet rsOwner = psOwner.executeQuery()) {
@@ -149,11 +149,14 @@ public class DatabaseSeeder implements CommandLineRunner {
                         newTemplate.setSteps(stepsList);
                         templateRepository.save(newTemplate);
                         existingTemplates.add(tName.toLowerCase());
-                        System.out.println("   [+] Migrated Template: " + tName + " (Owner: " + owner.getUsername() + ")");
+                        System.out.println("   [+] Migrated Template: " + tName + " (" + stepsList.size() + " steps) - Owner: " + owner.getUsername());
                     }
                 } catch (Exception e) {
-                    System.out.println("   [-] No templates table found in " + url);
+                    System.out.println("   [-] No templates table found or error: " + e.getMessage());
                 }
+
+                // Ila l9a l'DB w dar l'migration, n-7ebsou l'boucle bach may-3awdch y-scanni
+                break;
 
             } catch (Exception ignored) {
                 // DB not reachable, skip silently
