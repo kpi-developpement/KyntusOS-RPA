@@ -167,9 +167,9 @@ public class DatabaseSeeder implements CommandLineRunner {
                 .map(t -> t.getName().trim().toLowerCase())
                 .collect(Collectors.toSet());
 
-        // Pointing to Master Server IP with Port 5433
+        // Pointing to Master Server IP with Port 5454
         String[][] serversToScan = {
-                {"jdbc:postgresql://10.10.10.25:5433/", "kyntus_user", "kyntus_password"},
+                {"jdbc:postgresql://10.10.10.25:5454/", "kyntus_user", "kyntus_password"},
                 {"jdbc:postgresql://localhost:5432/", "postgres", "postgres"}
         };
 

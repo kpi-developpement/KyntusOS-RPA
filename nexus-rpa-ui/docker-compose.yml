@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: kyntus_password
       POSTGRES_DB: postgres
     ports:
-      - "5433:5432"
+      - "5454:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     restart: unless-stopped
