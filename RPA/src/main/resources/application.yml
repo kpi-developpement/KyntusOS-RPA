@@ -4,7 +4,7 @@ server:
 spring:
   datasource:
     # 🔥 DATABASE JDIDA M3ZOULA KHASSA B NEXUS RPA (MASTER SERVER)
-    url: jdbc:postgresql://10.10.10.25:5432/nexus_rpa_db
+    url: jdbc:postgresql://10.10.10.50:5432/nexus_rpa_db
     username: kyntus_user
     password: kyntus_password
     driver-class-name: org.postgresql.Driver
