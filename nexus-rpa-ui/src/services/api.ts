@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Template, Step } from '../types';
+import { Template, Step, PlaybackStatus } from '../types';
 
 const API_BASE_URL = 'http://localhost:8226/api/v1/rpa';
 
@@ -24,7 +24,6 @@ export const rpaApi = {
     const response = await axios.get(`${API_BASE_URL}/templates`);
     return response.data;
   },
-  // HADI HIYA L'API JDIDA DYAL DELETE
   deleteTemplate: async (templateId: number): Promise<void> => {
     await axios.delete(`${API_BASE_URL}/templates/${templateId}`);
   },
@@ -34,6 +33,10 @@ export const rpaApi = {
   },
   playBatchTemplate: async (templateName: string, filePaths: string[]): Promise<string> => {
     const response = await axios.post(`${API_BASE_URL}/play/batch/${templateName}`, filePaths);
+    return response.data;
+  },
+  getPlaybackStatus: async (): Promise<PlaybackStatus> => {
+    const response = await axios.get(`${API_BASE_URL}/play/status`);
     return response.data;
   },
   pausePlayback: async (): Promise<void> => {

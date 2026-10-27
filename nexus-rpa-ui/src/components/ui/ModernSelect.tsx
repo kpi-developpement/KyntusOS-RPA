@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, Check, Cpu, Zap, Layers } from "lucide-react";
+import { ChevronDown, Check, Cpu, Zap, Layers, HardDriveDownload, Monitor, ShieldCheck } from "lucide-react";
 
 export interface SelectOption {
   value: string;
@@ -19,9 +19,10 @@ interface ModernSelectProps {
   value: string;
   onChange: (value: string) => void;
   groups: OptionGroup[];
+  onOpenChange?: (isOpen: boolean) => void; // NOTIFIE LE PARENT QUAND LA DROPDOWN EST OUVERTE
 }
 
-export default function ModernSelect({ value, onChange, groups }: ModernSelectProps) {
+export default function ModernSelect({ value, onChange, groups, onOpenChange }: ModernSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -34,121 +35,163 @@ export default function ModernSelect({ value, onChange, groups }: ModernSelectPr
     }
   }
 
+  const toggleDropdown = () => {
+    const nextState = !isOpen;
+    setIsOpen(nextState);
+    if (onOpenChange) onOpenChange(nextState);
+  };
+
+  const closeDropdown = () => {
+    setIsOpen(false);
+    if (onOpenChange) onOpenChange(false);
+  };
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
+        closeDropdown();
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const getIcon = (type: string) => {
-    if (type === "custom") return <Layers size={14} color="#34d399" style={{ flexShrink: 0 }} />;
-    if (type === "builtin") return <Cpu size={14} color="#fb923c" style={{ flexShrink: 0 }} />;
-    return <Zap size={14} color="#c084fc" style={{ flexShrink: 0 }} />;
-  };
-
-  const getTriggerStyle = (type: string) => {
-    if (type === "custom") return { color: "#34d399", borderColor: "rgba(16, 185, 129, 0.4)", background: "rgba(16, 185, 129, 0.05)" };
-    if (type === "builtin") return { color: "#fb923c", borderColor: "rgba(249, 115, 22, 0.4)", background: "rgba(249, 115, 22, 0.05)" };
-    return { color: "#c084fc", borderColor: "rgba(168, 85, 247, 0.4)", background: "rgba(168, 85, 247, 0.05)" };
+  const getIcon = (type: string, val: string) => {
+    if (type === "custom") return <Layers size={13} color="#059669" />;
+    if (val.includes("MOTHER") || val.includes("CLIPBOARD") || val.includes("CSV")) {
+      return <HardDriveDownload size={13} color="#2563eb" />;
+    }
+    if (val.includes("WINDOW") || val.includes("CHROME") || val.includes("ALT") || val.includes("CTRL")) {
+      return <Monitor size={13} color="#0284c7" />;
+    }
+    if (val.includes("LOGIN") || val.includes("AUTH")) {
+      return <ShieldCheck size={13} color="#9333ea" />;
+    }
+    return <Zap size={13} color="#64748b" />;
   };
 
   return (
-    <div style={{ position: 'relative', width: '320px' }} ref={dropdownRef}>
-      
-      {/* TRIGGER */}
+    <div 
+      ref={dropdownRef}
+      style={{ 
+        position: 'relative', 
+        width: '320px',
+        zIndex: isOpen ? 99999 : 1
+      }} 
+    >
+      {/* TRIGGER INPUT */}
       <div 
         style={{ 
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
-          border: '1px solid', padding: '10px 16px', borderRadius: '8px', 
-          transition: 'all 0.3s', fontFamily: "'Fira Code', monospace", fontSize: '13px', 
-          cursor: 'none', ...getTriggerStyle(selectedOption.type) 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between', 
+          border: isOpen ? '1.5px solid #2563eb' : '1px solid #cbd5e1', 
+          padding: '6px 12px', 
+          borderRadius: '8px', 
+          background: '#f8fafc', 
+          fontFamily: "'Fira Code', monospace", 
+          fontSize: '12px', 
+          cursor: 'pointer', 
+          transition: 'all 0.15s ease',
+          boxShadow: isOpen ? '0 0 0 3px rgba(37, 99, 235, 0.12)' : 'none'
         }}
-        onClick={() => setIsOpen(!isOpen)}
-        onMouseEnter={(e) => e.currentTarget.style.filter = 'brightness(1.3)'}
-        onMouseLeave={(e) => e.currentTarget.style.filter = 'brightness(1)'}
+        onClick={toggleDropdown}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', overflow: 'hidden' }}>
-          {getIcon(selectedOption.type)}
-          <span style={{ fontWeight: 600, letterSpacing: '0.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
+          {getIcon(selectedOption.type, selectedOption.value)}
+          <span style={{ fontWeight: 700, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {selectedOption.label}
           </span>
         </div>
-        <motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
-          <ChevronDown size={16} color="#64748b" style={{ flexShrink: 0, marginLeft: '8px' }} />
+        <motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.15 }}>
+          <ChevronDown size={14} color="#64748b" style={{ flexShrink: 0, marginLeft: '6px' }} />
         </motion.div>
       </div>
 
-      {/* DROPDOWN LIST */}
+      {/* DROPDOWN POPUP */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+            initial={{ opacity: 0, y: -4, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            transition={{ duration: 0.15, ease: "easeOut" }}
+            exit={{ opacity: 0, y: -4, scale: 0.98 }}
+            transition={{ duration: 0.12 }}
             style={{ 
-              position: 'absolute', top: '100%', left: 0, width: '100%', marginTop: '8px', 
-              background: '#050508', border: '1px solid rgba(255,255,255,0.1)', 
-              borderRadius: '12px', boxShadow: '0 15px 50px rgba(0,0,0,0.9)', zIndex: 999, overflow: 'hidden' 
+              position: 'absolute', 
+              top: '100%', 
+              left: 0, 
+              width: '100%', 
+              marginTop: '6px', 
+              background: '#ffffff', 
+              border: '1.5px solid #cbd5e1', 
+              borderRadius: '12px', 
+              boxShadow: '0 25px 60px -10px rgba(15, 23, 42, 0.25), 0 8px 20px rgba(0, 0, 0, 0.08)', 
+              zIndex: 999999, // Z-INDEX MAXIMAL
+              overflow: 'hidden' 
             }}
           >
-            <div className="custom-scrollbar" style={{ maxHeight: '400px', overflowY: 'auto', padding: '8px 0' }}>
+            <div style={{ maxHeight: '380px', overflowY: 'auto', padding: '6px 0' }}>
               {groups.map((group, groupIdx) => (
-                <div key={groupIdx} style={{ marginBottom: '8px' }}>
+                <div key={groupIdx} style={{ marginBottom: '6px' }}>
                   
+                  {/* GROUP HEADER */}
                   <div style={{ 
-                    padding: '8px 16px', fontSize: '10px', fontWeight: 900, color: '#64748b', 
-                    textTransform: 'uppercase', letterSpacing: '2px', background: 'rgba(255,255,255,0.02)', 
-                    borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)', 
-                    marginBottom: '4px' 
+                    padding: '6px 12px', 
+                    fontSize: '10px', 
+                    fontWeight: 800, 
+                    color: '#64748b', 
+                    textTransform: 'uppercase', 
+                    letterSpacing: '1px', 
+                    background: '#f8fafc', 
+                    borderTop: '1px solid #f1f5f9', 
+                    borderBottom: '1px solid #f1f5f9' 
                   }}>
                     {group.groupLabel}
                   </div>
                   
+                  {/* OPTIONS LIST */}
                   {group.options.map((option) => {
                     const isSelected = value === option.value;
                     return (
                       <div
                         key={option.value}
                         style={{ 
-                          display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
-                          padding: '10px 16px', fontSize: '12px', fontFamily: "'Fira Code', monospace", 
-                          transition: 'all 0.2s', borderLeft: '2px solid transparent', cursor: 'none',
-                          background: isSelected ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
-                          borderLeftColor: isSelected ? '#3b82f6' : 'transparent',
-                          color: isSelected ? 'white' : '#cbd5e1',
-                          fontWeight: isSelected ? 'bold' : 'normal'
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'space-between', 
+                          padding: '8px 12px', 
+                          fontSize: '12px', 
+                          fontFamily: "'Fira Code', monospace", 
+                          cursor: 'pointer',
+                          background: isSelected ? '#eff6ff' : 'transparent',
+                          color: isSelected ? '#1d4ed8' : '#334155',
+                          fontWeight: isSelected ? 800 : 500,
+                          transition: 'all 0.1s ease'
                         }}
                         onMouseEnter={(e) => {
                           if (!isSelected) {
-                            e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
-                            e.currentTarget.style.borderLeftColor = '#64748b';
-                            e.currentTarget.style.transform = 'translateX(4px)';
+                            e.currentTarget.style.background = '#f8fafc';
+                            e.currentTarget.style.color = '#0f172a';
                           }
                         }}
                         onMouseLeave={(e) => {
                           if (!isSelected) {
                             e.currentTarget.style.background = 'transparent';
-                            e.currentTarget.style.borderLeftColor = 'transparent';
-                            e.currentTarget.style.transform = 'translateX(0)';
+                            e.currentTarget.style.color = '#334155';
                           }
                         }}
                         onClick={() => {
                           onChange(option.value);
-                          setIsOpen(false);
+                          closeDropdown();
                         }}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', overflow: 'hidden' }}>
-                          {getIcon(option.type)}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
+                          {getIcon(option.type, option.value)}
                           <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {option.label}
                           </span>
                         </div>
-                        {isSelected && <Check size={14} color="#3b82f6" style={{ flexShrink: 0, marginLeft: '8px' }} />}
+                        {isSelected && <Check size={14} color="#2563eb" strokeWidth={2.5} style={{ flexShrink: 0 }} />}
                       </div>
                     );
                   })}

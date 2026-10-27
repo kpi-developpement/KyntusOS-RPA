@@ -1,144 +1,265 @@
 package com.nexus.RPA.config;
 
-import com.nexus.RPA.dto.RpaDtos.StepDto;
-import com.nexus.RPA.dto.RpaDtos.TemplateDto;
-import com.nexus.RPA.service.TemplateService;
+import com.nexus.RPA.entity.StepEntity;
+import com.nexus.RPA.entity.TemplateEntity;
+import com.nexus.RPA.entity.UserEntity;
+import com.nexus.RPA.repository.TemplateRepository;
+import com.nexus.RPA.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 public class DatabaseSeeder implements CommandLineRunner {
 
-    private final TemplateService templateService;
+    private final UserRepository userRepository;
+    private final TemplateRepository templateRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public DatabaseSeeder(TemplateService templateService) {
-        this.templateService = templateService;
+    public DatabaseSeeder(UserRepository userRepository, TemplateRepository templateRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.templateRepository = templateRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
+    @Transactional
     public void run(String... args) throws Exception {
-        if (templateService.getAllTemplates().isEmpty()) {
-            System.out.println("[+] Database is empty. Seeding default templates...");
-            seedTauxRaccTemplate();
-            seedBenchmarkTemplate();
+
+        // 1. Ensure Default Admin Exists
+        UserEntity admin;
+        Optional<UserEntity> adminOpt = userRepository.findByUsername("admin");
+        if (adminOpt.isEmpty()) {
+            System.out.println("[+] Creating default admin user in nexus_rpa_db...");
+            admin = new UserEntity();
+            admin.setUsername("admin");
+            admin.setPassword(passwordEncoder.encode("admin123"));
+            admin.setRole("ADMIN");
+            admin = userRepository.save(admin);
+        } else {
+            admin = adminOpt.get();
+            if (!admin.getPassword().startsWith("$2a$")) {
+                admin.setPassword(passwordEncoder.encode("admin123"));
+                admin = userRepository.save(admin);
+            }
         }
 
-        try {
-            templateService.getTemplateByName("PROC_MIG_UPLOAD");
-        } catch (Exception e) {
-            System.out.println("[+] Injecting missing Macro: PROC_MIG_UPLOAD...");
-            seedMigUploadMacro();
+        // 2. Link any orphan templates to admin
+        List<TemplateEntity> orphanTemplates = templateRepository.findByUserIsNull();
+        if (!orphanTemplates.isEmpty()) {
+            for (TemplateEntity t : orphanTemplates) {
+                t.setUser(admin);
+            }
+            templateRepository.saveAll(orphanTemplates);
+        }
+
+        // 3. Scan PostgreSQL server for any existing templates
+        deepScanAllDatabasesForTemplates(admin);
+
+        // 4. Seed Kyntus Core Templates & Sub-Macros if they were lost prior to DB setup
+        seedCoreKyntusTemplatesIfMissing(admin);
+
+        System.out.println("[✓] Database Seeder Ready. Total templates for admin: " + templateRepository.count());
+    }
+
+    private void seedCoreKyntusTemplatesIfMissing(UserEntity admin) {
+        Set<String> existingNames = templateRepository.findAll().stream()
+                .map(t -> t.getName().trim().toLowerCase())
+                .collect(Collectors.toSet());
+
+        // 1. Taux_Racc
+        if (!existingNames.contains("taux_racc")) {
+            createPresetTemplate(admin, "Taux_Racc", List.of(
+                    step(0, "ACTION", null, null, 2.0, "OPEN_CHROME", "start chrome --incognito --start-maximized \"https://mig-dashboard.kyntus.fr/\""),
+                    step(1, "ACTION", null, null, 3.0, "SMART_MIG_LOGIN_OR_SKIP", "robot:scraperrobot"),
+                    step(2, "CLICK", 340, 220, 2.0, null, null),
+                    step(3, "ACTION", null, null, 2.5, "PROC_OPEN_DOWNLOAD", null),
+                    step(4, "ACTION", null, null, 3.0, "PROC_EXTRACT_EXCEL", null),
+                    step(5, "ACTION", null, null, 1.5, "SAVE_CLIPBOARD_TO_CSV", "{\"folder\":\"C:\\\\Nexus_Data\",\"filename\":\"Taux_Racc.csv\"}")
+            ));
+        }
+
+        // 2. Benchmark
+        if (!existingNames.contains("benchmark")) {
+            createPresetTemplate(admin, "Benchmark", List.of(
+                    step(0, "ACTION", null, null, 2.0, "OPEN_CHROME", "start chrome --incognito --start-maximized \"https://mig-dashboard.kyntus.fr/\""),
+                    step(1, "ACTION", null, null, 3.0, "SMART_MIG_LOGIN_OR_SKIP", "robot:scraperrobot"),
+                    step(2, "CLICK", 520, 220, 2.0, null, null),
+                    step(3, "ACTION", null, null, 2.5, "PROC_OPEN_DOWNLOAD", null),
+                    step(4, "ACTION", null, null, 3.0, "PROC_EXTRACT_EXCEL", null),
+                    step(5, "ACTION", null, null, 1.5, "SAVE_CLIPBOARD_TO_CSV", "{\"folder\":\"C:\\\\Nexus_Data\",\"filename\":\"Benchmark.csv\"}")
+            ));
+        }
+
+        // 3. SATCLI_Export
+        if (!existingNames.contains("satcli_export")) {
+            createPresetTemplate(admin, "SATCLI_Export", List.of(
+                    step(0, "ACTION", null, null, 2.0, "FOCUS_WINDOW", "Citrix"),
+                    step(1, "ACTION", null, null, 1.5, "FORCE_MAXIMIZE_FRENCH", null),
+                    step(2, "CLICK", 640, 360, 2.0, null, null),
+                    step(3, "ACTION", null, null, 2.0, "CTRL_A", null),
+                    step(4, "ACTION", null, null, 2.0, "CTRL_C", null),
+                    step(5, "ACTION", null, null, 1.5, "SAVE_CLIPBOARD_TO_CSV", "{\"folder\":\"C:\\\\Nexus_Data\",\"filename\":\"SATCLI_Export.csv\"}")
+            ));
+        }
+
+        // 4. PROC_EXTRACT_EXCEL (Sub-Macro)
+        if (!existingNames.contains("proc_extract_excel")) {
+            createPresetTemplate(admin, "PROC_EXTRACT_EXCEL", List.of(
+                    step(0, "ACTION", null, null, 1.5, "WIN_UP", null),
+                    step(1, "ACTION", null, null, 1.0, "ESC", null),
+                    step(2, "ACTION", null, null, 1.0, "CTRL_HOME", null),
+                    step(3, "ACTION", null, null, 1.5, "CTRL_A", null),
+                    step(4, "ACTION", null, null, 3.0, "CTRL_C", null),
+                    step(5, "ACTION", null, null, 1.5, "ALT_F4", null),
+                    step(6, "ACTION", null, null, 1.0, "HANDLE_EXCEL_CLIPBOARD_PROMPT", null)
+            ));
+        }
+
+        // 5. PROC_OPEN_DOWNLOAD (Sub-Macro)
+        if (!existingNames.contains("proc_open_download")) {
+            createPresetTemplate(admin, "PROC_OPEN_DOWNLOAD", List.of(
+                    step(0, "ACTION", null, null, 2.0, "PROC_OPEN_DOWNLOAD", null),
+                    step(1, "ACTION", null, null, 2.0, "ENTER", null)
+            ));
+        }
+
+        // 6. PROC_CLEAR_CACHE (Sub-Macro)
+        if (!existingNames.contains("proc_clear_cache")) {
+            createPresetTemplate(admin, "PROC_CLEAR_CACHE", List.of(
+                    step(0, "ACTION", null, null, 2.0, "PROC_CLEAR_CACHE", null),
+                    step(1, "ACTION", null, null, 1.5, "PROC_HARD_RELOAD", null)
+            ));
         }
     }
 
-    private void seedTauxRaccTemplate() {
-        TemplateDto template = new TemplateDto();
-        template.setName("Taux_Racc_Auto");
-        List<StepDto> steps = new ArrayList<>();
-        steps.add(createClickStep(0, 325, 357, 2.5));
-        steps.add(createClickStep(1, 294, 416, 10.0));
-        steps.add(createClickStep(2, 1178, 639, 1.2));
-        steps.add(createClickStep(3, 1715, 179, 1.2));
-        steps.add(createClickStep(4, 1719, 254, 4.0));
-        steps.add(createClickStep(5, 80, 174, 4.0));
-        steps.add(createClickStep(6, 770, 93, 2.0));
-        steps.add(createActionStep(7, "TYPE_TOUT", 2.5));
-        steps.add(createClickStep(8, 763, 152, 4.0));
-        steps.add(createClickStep(9, 870, 93, 4.0));
-        steps.add(createActionStep(10, "ENTER", 5.0));
-        steps.add(createActionStep(11, "DOUBLE_CLICK", 2.0));
-        steps.add(createActionStep(12, "ENTER", 16.0));
-        steps.add(createActionStep(13, "WIN_UP", 1.5));
-        steps.add(createActionStep(14, "ESC", 1.5));
-        steps.add(createActionStep(15, "CTRL_HOME", 1.0));
-        steps.add(createActionStep(16, "CTRL_A", 2.5));
-        steps.add(createActionStep(17, "CTRL_C", 6.0));
-        steps.add(createActionStep(18, "ALT_F4", 2.0));
-        steps.add(createActionStep(19, "TYPE_N", 2.0));
-        template.setSteps(steps);
-        templateService.saveTemplate(template);
+    private StepEntity step(int order, String type, Integer x, Integer y, double delay, String action, String param) {
+        StepEntity s = new StepEntity();
+        s.setOrderIndex(order);
+        s.setType(type);
+        s.setXCoordinate(x);
+        s.setYCoordinate(y);
+        s.setDelay(delay);
+        s.setActionName(action);
+        s.setParameter(param);
+        return s;
     }
 
-    private void seedBenchmarkTemplate() {
-        TemplateDto template = new TemplateDto();
-        template.setName("Benchmark_Auto");
-        List<StepDto> steps = new ArrayList<>();
-        steps.add(createClickStep(0, 1110, 439, 9.0));
-        steps.add(createClickStep(1, 72, 447, 2.5));
-        steps.add(createClickStep(2, 1714, 174, 1.5));
-        steps.add(createClickStep(3, 1744, 253, 3.0));
-        steps.add(createClickStep(4, 101, 174, 3.0));
-        steps.add(createClickStep(5, 721, 94, 2.0));
-        steps.add(createActionStep(6, "TYPE_TOUT", 2.5));
-        steps.add(createClickStep(7, 739, 148, 4.0));
-        steps.add(createClickStep(8, 883, 93, 4.0));
-        steps.add(createActionStep(9, "ENTER", 5.0));
-        steps.add(createActionStep(10, "DOUBLE_CLICK", 2.0));
-        steps.add(createActionStep(11, "ENTER", 16.0));
-        steps.add(createActionStep(12, "WIN_UP", 1.5));
-        steps.add(createActionStep(13, "ESC", 1.5));
-        steps.add(createActionStep(14, "CTRL_HOME", 1.0));
-        steps.add(createActionStep(15, "CTRL_A", 2.5));
-        steps.add(createActionStep(16, "CTRL_C", 6.0));
-        steps.add(createActionStep(17, "ALT_F4", 2.0));
-        steps.add(createActionStep(18, "TYPE_N", 2.0));
-        template.setSteps(steps);
-        templateService.saveTemplate(template);
+    private void createPresetTemplate(UserEntity admin, String name, List<StepEntity> steps) {
+        TemplateEntity t = new TemplateEntity();
+        t.setName(name);
+        t.setUser(admin);
+        t.setSteps(new ArrayList<>(steps));
+        templateRepository.save(t);
+        System.out.println("   [+] Restored Core Template: " + name);
     }
 
-    private void seedMigUploadMacro() {
-        TemplateDto template = new TemplateDto();
-        template.setName("PROC_MIG_UPLOAD");
-        List<StepDto> steps = new ArrayList<>();
+    private void deepScanAllDatabasesForTemplates(UserEntity admin) {
+        Set<String> existingNames = templateRepository.findAll().stream()
+                .map(t -> t.getName().trim().toLowerCase())
+                .collect(Collectors.toSet());
 
-        // HADI HIYA L'ACTION JDIDA F L'BIDAYA
-        steps.add(createActionStep(0, "OPEN_CHROME", 3.0));
+        String[][] serversToScan = {
+                {"jdbc:postgresql://10.10.10.50:5432/", "kyntus_user", "kyntus_password"},
+                {"jdbc:postgresql://localhost:5432/", "postgres", "postgres"},
+                {"jdbc:postgresql://localhost:5432/", "kyntus_user", "kyntus_password"}
+        };
 
-        steps.add(createActionStep(1, "CTRL_L", 1.0));
-        steps.add(createActionWithParamStep(2, "TYPE_TEXT", "https://mig-dashboard.kyntus.fr/", 1.0));
-        steps.add(createActionStep(3, "ENTER", 6.0));
-        steps.add(createActionWithParamStep(4, "TYPE_TEXT", "robot", 1.0));
-        steps.add(createActionStep(5, "TAB", 1.0));
-        steps.add(createActionWithParamStep(6, "TYPE_TEXT", "scraperrobot", 1.0));
-        steps.add(createActionStep(7, "ENTER", 5.0));
-        steps.add(createClickStep(8, 443, 438, 2.0));
-        steps.add(createClickStep(9, 1612, 657, 2.0));
-        steps.add(createActionStep(10, "TYPE_LAST_SAVED_FILE", 1.5));
-        steps.add(createActionStep(11, "ENTER", 2.0));
+        for (String[] srv : serversToScan) {
+            String baseUrl = srv[0];
+            String dbUser = srv[1];
+            String dbPass = srv[2];
 
-        template.setSteps(steps);
-        templateService.saveTemplate(template);
+            List<String> databaseNames = new ArrayList<>();
+            try (Connection rootConn = DriverManager.getConnection(baseUrl + "postgres", dbUser, dbPass);
+                 PreparedStatement ps = rootConn.prepareStatement(
+                         "SELECT datname FROM pg_database WHERE datistemplate = false AND datname NOT IN ('nexus_rpa_db')")) {
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        databaseNames.add(rs.getString("datname"));
+                    }
+                }
+            } catch (Exception ignored) {
+                continue;
+            }
+
+            for (String dbName : databaseNames) {
+                scanSingleDatabase(baseUrl + dbName, dbUser, dbPass, dbName, admin, existingNames);
+            }
+        }
     }
 
-    private StepDto createClickStep(int order, int x, int y, double delay) {
-        StepDto step = new StepDto();
-        step.setOrderIndex(order);
-        step.setType("CLICK");
-        step.setXCoordinate(x);
-        step.setYCoordinate(y);
-        step.setDelay(delay);
-        return step;
-    }
+    private void scanSingleDatabase(String fullJdbcUrl, String dbUser, String dbPass, String dbName, UserEntity admin, Set<String> existingNames) {
+        try (Connection conn = DriverManager.getConnection(fullJdbcUrl, dbUser, dbPass)) {
+            boolean hasTemplatesTable;
+            try (PreparedStatement checkPs = conn.prepareStatement(
+                    "SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'templates'")) {
+                try (ResultSet rs = checkPs.executeQuery()) {
+                    hasTemplatesTable = rs.next();
+                }
+            }
+            if (!hasTemplatesTable) return;
 
-    private StepDto createActionStep(int order, String actionName, double delay) {
-        StepDto step = new StepDto();
-        step.setOrderIndex(order);
-        step.setType("ACTION");
-        step.setActionName(actionName);
-        step.setDelay(delay);
-        return step;
-    }
+            String selectTemplatesSql = "SELECT id, name FROM templates ORDER BY id ASC";
+            try (PreparedStatement psT = conn.prepareStatement(selectTemplatesSql);
+                 ResultSet rsT = psT.executeQuery()) {
 
-    private StepDto createActionWithParamStep(int order, String actionName, String param, double delay) {
-        StepDto step = new StepDto();
-        step.setOrderIndex(order);
-        step.setType("ACTION");
-        step.setActionName(actionName);
-        step.setParameter(param);
-        step.setDelay(delay);
-        return step;
+                while (rsT.next()) {
+                    long oldId = rsT.getLong("id");
+                    String rawName = rsT.getString("name");
+                    if (rawName == null || rawName.trim().isEmpty()) continue;
+
+                    String finalName = rawName.trim();
+                    if (existingNames.contains(finalName.toLowerCase())) continue;
+
+                    List<StepEntity> stepsList = new ArrayList<>();
+                    String selectStepsSql = "SELECT order_index, type, x_coordinate, y_coordinate, delay, action_name, parameter " +
+                            "FROM steps WHERE template_id = ? ORDER BY order_index ASC";
+
+                    try (PreparedStatement psS = conn.prepareStatement(selectStepsSql)) {
+                        psS.setLong(1, oldId);
+                        try (ResultSet rsS = psS.executeQuery()) {
+                            int idx = 0;
+                            while (rsS.next()) {
+                                StepEntity step = new StepEntity();
+                                int orderIdx = rsS.getInt("order_index");
+                                step.setOrderIndex(rsS.wasNull() ? idx : orderIdx);
+                                step.setType(rsS.getString("type") != null ? rsS.getString("type") : "ACTION");
+
+                                int x = rsS.getInt("x_coordinate");
+                                if (!rsS.wasNull()) step.setXCoordinate(x);
+
+                                int y = rsS.getInt("y_coordinate");
+                                if (!rsS.wasNull()) step.setYCoordinate(y);
+
+                                double delay = rsS.getDouble("delay");
+                                step.setDelay(rsS.wasNull() ? 1.0 : delay);
+
+                                step.setActionName(rsS.getString("action_name"));
+                                step.setParameter(rsS.getString("parameter"));
+                                stepsList.add(step);
+                                idx++;
+                            }
+                        }
+                    }
+
+                    TemplateEntity newTemplate = new TemplateEntity();
+                    newTemplate.setName(finalName);
+                    newTemplate.setUser(admin);
+                    newTemplate.setSteps(stepsList);
+
+                    templateRepository.save(newTemplate);
+                    existingNames.add(finalName.toLowerCase());
+                }
+            }
+        } catch (Exception ignored) {}
     }
 }

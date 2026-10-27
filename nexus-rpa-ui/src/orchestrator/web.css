@@ -1,0 +1,32 @@
+/* Isolated CSS for Web Orchestrator */
+.web-glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 24px;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.15), 0 0 0 1px rgba(255,255,255,0.5) inset;
+}
+
+.web-robot-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 20px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+
+.web-robot-card:hover {
+  transform: translateY(-4px);
+  border-color: #93c5fd;
+  box-shadow: 0 12px 24px -8px rgba(37, 99, 235, 0.15);
+}
+
+.web-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.web-status-dot.online { background: #10b981; box-shadow: 0 0 10px #10b981; }
+.web-status-dot.busy { background: #f59e0b; box-shadow: 0 0 10px #f59e0b; }
+.web-status-dot.offline { background: #ef4444; box-shadow: 0 0 10px #ef4444; }

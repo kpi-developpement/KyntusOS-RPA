@@ -13,35 +13,32 @@ interface EditorHeaderProps {
 
 export default function EditorHeader({ templateName, setTemplateName, recordingType, onSave, onDiscard }: EditorHeaderProps) {
   const isMacro = recordingType === "macro";
-  const labelColor = isMacro ? "#34d399" : "#3b82f6";
-  const glowColor = isMacro ? "rgba(16, 185, 129, 0.2)" : "rgba(59, 130, 246, 0.2)";
-  const placeholder = isMacro ? "e.g., PROC_LOGIN_SYSTEM" : "e.g., DATA_EXTRACTION_PROTOCOL";
+  const labelColor = isMacro ? "#059669" : "#2563eb";
+  const placeholder = isMacro ? "e.g., PROC_LOGIN_SYSTEM" : "e.g., DAILY_INDICATORS_PIPELINE";
 
   return (
     <div style={{ 
       display: 'flex', 
       alignItems: 'center', 
       justifyContent: 'space-between', 
-      background: 'linear-gradient(90deg, rgba(10,10,15,0.9), rgba(5,5,10,0.95))', 
-      border: `1px solid ${labelColor}`, 
+      background: '#ffffff', 
+      border: `1px solid #cbd5e1`, 
       borderRadius: '16px', 
-      padding: '20px 30px', 
-      marginBottom: '30px', 
-      boxShadow: `0 10px 30px rgba(0,0,0,0.8), inset 0 0 20px ${glowColor}`,
-      backdropFilter: 'blur(15px)',
+      padding: '18px 28px', 
+      marginBottom: '25px', 
+      boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
       maxWidth: '1000px',
-      margin: '0 auto 30px auto'
+      margin: '0 auto 25px auto'
     }}>
       
-      {/* LEFT SIDE: TERMINAL INPUT */}
       <div style={{ display: 'flex', flexDirection: 'column', flex: 1, marginRight: '40px' }}>
-        <label style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 800, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <label style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '1.5px', fontWeight: 800, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Terminal size={14} color={labelColor} />
           {isMacro ? "Macro Identifier" : "Sequence Identifier"}
         </label>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px', borderBottom: `2px solid ${labelColor}`, paddingBottom: '5px' }}>
-          <span style={{ fontSize: '1.8rem', fontWeight: 900, color: labelColor }}>{'>'}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', borderBottom: `2px solid ${labelColor}`, paddingBottom: '4px' }}>
+          <span style={{ fontSize: '1.6rem', fontWeight: 900, color: labelColor }}>{'>'}</span>
           <input
             type="text"
             placeholder={placeholder}
@@ -50,25 +47,23 @@ export default function EditorHeader({ templateName, setTemplateName, recordingT
             style={{ 
               background: 'transparent', 
               border: 'none', 
-              color: 'white', 
-              fontSize: '1.5rem', 
+              color: '#0f172a', 
+              fontSize: '1.4rem', 
               fontWeight: 700, 
               width: '100%', 
               fontFamily: "'Fira Code', monospace", 
-              cursor: 'none',
               outline: 'none'
             }}
           />
         </div>
       </div>
 
-      {/* RIGHT SIDE: BUTTONS */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-        <Button variant="ghost" size="lg" onClick={onDiscard} style={{ color: '#ef4444' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <Button variant="ghost" size="md" onClick={onDiscard} style={{ color: '#dc2626' }}>
           DISCARD
         </Button>
-        <Button variant="success" size="lg" onClick={onSave} style={{ boxShadow: `0 0 20px rgba(16,185,129,0.3)` }}>
-          <Save size={18} /> COMMIT {isMacro ? "MACRO" : "SEQUENCE"}
+        <Button variant="success" size="md" onClick={onSave}>
+          <Save size={16} /> COMMIT {isMacro ? "MACRO" : "SEQUENCE"}
         </Button>
       </div>
 
