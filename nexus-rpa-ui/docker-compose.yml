@@ -7,7 +7,7 @@ services:
     environment:
       POSTGRES_USER: kyntus_user
       POSTGRES_PASSWORD: kyntus_password
-      POSTGRES_DB: postgres
+      POSTGRES_DB: nexus_rpa_db
     ports:
       - "5454:5432"
     volumes:
@@ -21,6 +21,8 @@ services:
     container_name: nexus_master_api
     ports:
       - "9833:9833"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/nexus_rpa_db
     restart: unless-stopped
     depends_on:
       - postgres
