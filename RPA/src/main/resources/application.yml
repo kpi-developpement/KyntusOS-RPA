@@ -1,10 +1,10 @@
 server:
-  port: 8226
+  port: 9833
 
 spring:
   datasource:
-    # 🔥 DATABASE JDIDA M3ZOULA KHASSA B NEXUS RPA
-    url: jdbc:postgresql://10.10.10.50:5432/nexus_rpa_db
+    # 🔥 DATABASE JDIDA M3ZOULA KHASSA B NEXUS RPA (MASTER SERVER)
+    url: jdbc:postgresql://10.10.10.25:5432/nexus_rpa_db
     username: kyntus_user
     password: kyntus_password
     driver-class-name: org.postgresql.Driver
@@ -20,7 +20,7 @@ spring:
 # URL dyal l'ancienne DB ghir bach DatabaseSeeder y-recuperi lik douk 9 templates automatiquement
 nexus:
   legacy-db:
-    url: jdbc:postgresql://10.10.10.50:5432/kyntus_db
+    url: jdbc:postgresql://10.10.10.25:5432/kyntus_db
     username: kyntus_user
     password: kyntus_password
 

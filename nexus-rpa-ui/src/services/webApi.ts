@@ -7,11 +7,11 @@ export const getRobotBaseUrl = (): string => {
     if (saved && saved.trim().length > 0) {
       return saved.trim().replace(/\/+$/, "");
     }
-    // Smart Auto-Detect: Ila dkhalti mn PC akhor l-site web, y-pointi 3la nefs l-host f port 8226
+    // Smart Auto-Detect: Ila dkhalti mn PC akhor l-site web, y-pointi 3la nefs l-host f port 9833
     const currentHost = window.location.hostname;
-    return `http://${currentHost}:8226`;
+    return `http://${currentHost}:9833`;
   }
-  return "http://localhost:8226";
+  return "http://localhost:9833";
 };
 
 export const setRobotBaseUrl = (url: string) => {

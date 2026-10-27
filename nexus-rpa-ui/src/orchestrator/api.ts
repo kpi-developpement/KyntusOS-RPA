@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { Template, PlaybackStatus, AuthResponse } from '../types';
 
-// L'URL dyal l'Backend Spring Boot li fih l'Robot (Serveur f charika)
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://10.10.10.25:8082/api/v1';
+// L'URL dyal l'Backend Spring Boot li fih l'Robot (Serveur f charika awla Worker Node)
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://10.10.10.50:9833/api/v1';
 
 const webApiClient = axios.create({
   baseURL: API_BASE_URL,

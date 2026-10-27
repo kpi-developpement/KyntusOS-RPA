@@ -17,7 +17,8 @@ public class NexusRpaApplication {
     }
 
     private static void ensureDedicatedDatabaseExists() {
-        String pgBaseUrl = "jdbc:postgresql://10.10.10.50:5432/postgres";
+        // Pointing to Master Server IP
+        String pgBaseUrl = "jdbc:postgresql://10.10.10.25:5432/postgres";
         String user = "kyntus_user";
         String pass = "kyntus_password";
         String targetDb = "nexus_rpa_db";

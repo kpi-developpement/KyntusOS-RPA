@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Template, Step, PlaybackStatus } from '../types';
 
-const API_BASE_URL = 'http://localhost:8226/api/v1/rpa';
+const API_BASE_URL = 'http://localhost:9833/api/v1/rpa';
 
 export const rpaApi = {
   startRecording: async (): Promise<string> => {

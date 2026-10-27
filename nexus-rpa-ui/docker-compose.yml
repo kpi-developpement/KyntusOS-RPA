@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: nexus_db
+    environment:
+      POSTGRES_USER: kyntus_user
+      POSTGRES_PASSWORD: kyntus_password
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  nexus-web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: nexus_web_dashboard
+    ports:
+      - "3644:3644"
+    environment:
+      - NODE_ENV=production
+      - PORT=3644
+    restart: unless-stopped
+    depends_on:
+      - postgres
+
+volumes:
+  pgdata:
