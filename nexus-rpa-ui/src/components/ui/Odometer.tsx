@@ -2,34 +2,23 @@
 
 import React, { useEffect, useRef } from "react";
 
-/* ============================================================
-   ODOMETER — rolling digit KPI
-   • Props: { value: number }
-   • Renders one .odo-strip (0..9 column) per digit.
-   • Mounts at 0, then after a double-rAF slides every strip
-     to the target digit with translate3d (GPU only).
-   • Same digit change later = instant smooth re-roll
-     because strips stay mounted (no unmount flicker).
-   • Commas / decimal point rendered as static spans.
-   ============================================================ */
-
 interface OdometerProps {
   value: number;
 }
 
 export default function Odometer({ value }: OdometerProps) {
   const hostRef = useRef<HTMLSpanElement | null>(null);
-  const prevRef = useRef(0);
+  const prevRef = useRef<number | null>(null);
 
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
 
-    const target = Math.max(0, Math.floor(value));
-    const str = target.toLocaleString("en-US"); // adds commas
-    const prevStr = prevRef.current.toLocaleString("en-US");
+    const target = Math.max(0, Math.floor(value ?? 0));
+    const str = target.toLocaleString("en-US");
+    const prevStr = prevRef.current !== null ? prevRef.current.toLocaleString("en-US") : "";
 
-    // build DOM once per digit-count/layout change
+    // Build DOM if not built or if digit count changes
     if (host.dataset.built !== "1" || str.length !== prevStr.length) {
       host.innerHTML = "";
       str.split("").forEach((ch) => {
@@ -41,6 +30,8 @@ export default function Odometer({ value }: OdometerProps) {
             dd.textContent = String(d);
             strip.appendChild(dd);
           }
+          // Set initial target transform immediately so no unclipped glitch occurs
+          strip.style.transform = `translate3d(0, -${Number(ch)}em, 0)`;
           host.appendChild(strip);
         } else {
           const st = document.createElement("span");
@@ -52,25 +43,21 @@ export default function Odometer({ value }: OdometerProps) {
       host.dataset.built = "1";
     }
 
-    // position every strip at its digit
+    // Animate to new values smoothly with GPU translate3d
     const strips = host.querySelectorAll<HTMLSpanElement>(".odo-strip");
     let si = 0;
-    const raf1 = requestAnimationFrame(() => {
-      const raf2 = requestAnimationFrame(() => {
-        for (const ch of str) {
-          if (/\d/.test(ch)) {
-            const strip = strips[si++];
-            if (!strip) continue;
-            strip.style.transform = `translate3d(0, -${Number(ch)}em, 0)`;
-          }
+    const rafId = requestAnimationFrame(() => {
+      for (const ch of str) {
+        if (/\d/.test(ch)) {
+          const strip = strips[si++];
+          if (!strip) continue;
+          strip.style.transform = `translate3d(0, -${Number(ch)}em, 0)`;
         }
-      });
-      // store raf2 so cleanup could cancel it if needed
-      (host as any).__raf2 = raf2;
+      }
     });
-    (host as any).__raf1 = raf1;
 
     prevRef.current = target;
+    return () => cancelAnimationFrame(rafId);
   }, [value]);
 
   return <span ref={hostRef} className="odo" />;

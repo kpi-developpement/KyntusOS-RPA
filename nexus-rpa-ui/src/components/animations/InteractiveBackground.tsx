@@ -53,6 +53,14 @@ export default function InteractiveBackground({
     let orbX = 0;
     let orbY = 0;
 
+    // Zero-GC Preallocated Needles Pool (Eliminates GC lag completely at 144Hz)
+    const NEEDLE_CAP = 256;
+    const needleFromX = new Float32Array(NEEDLE_CAP);
+    const needleFromY = new Float32Array(NEEDLE_CAP);
+    const needleToX = new Float32Array(NEEDLE_CAP);
+    const needleToY = new Float32Array(NEEDLE_CAP);
+    const needleAlpha = new Float32Array(NEEDLE_CAP);
+
     const initGrid = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 1.25);
       width = window.innerWidth;
@@ -197,15 +205,6 @@ export default function InteractiveBackground({
       // Phase A: Batch resting dots into single fill call
       ctx.beginPath();
       let needleCount = 0;
-
-      // Temp arrays for displaced nodes (needles) — avoid per-node draw calls for resting ones
-      // We collect needle data to draw AFTER the batch fill
-      const NEEDLE_CAP = 256;
-      const needleFromX = new Float32Array(NEEDLE_CAP);
-      const needleFromY = new Float32Array(NEEDLE_CAP);
-      const needleToX = new Float32Array(NEEDLE_CAP);
-      const needleToY = new Float32Array(NEEDLE_CAP);
-      const needleAlpha = new Float32Array(NEEDLE_CAP);
 
       for (let i = 0; i < nodeCount; i++) {
         const bx = baseX[i];

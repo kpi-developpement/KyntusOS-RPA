@@ -15,7 +15,7 @@ import {
   Play, Pause, Square, Cpu, Layers, Activity, LogOut, Globe, Clock, 
   CheckCircle2, UserPlus, Send, X, Users, LayoutDashboard, Search, 
   Server, Trash2, Sparkles, RefreshCw, Timer, ListOrdered, Database,
-  SlidersHorizontal, Terminal, ShieldAlert
+  SlidersHorizontal, Terminal, ShieldAlert, Zap
 } from "lucide-react";
 
 export default function OrchestratorDashboard() {
@@ -260,24 +260,44 @@ export default function OrchestratorDashboard() {
         )}
       </AnimatePresence>
 
-      {/* TOP NAVIGATION */}
+      {/* TOP NAVIGATION — ELEVATED CYBER COMMAND DECK */}
       <nav className="web-nav">
+        {/* Animated Hardware-Accelerated Laser Sweep Rail */}
+        <div className="web-nav-laser-rail">
+          <div className="web-nav-laser-beam" />
+        </div>
+
         <div className="web-nav-logo">
-          <div className="web-nav-icon">
-            <Globe size={22} />
+          <div className="web-nav-icon-wrap">
+            <div className="web-nav-icon-halo" />
+            <div className="web-nav-icon">
+              <Globe size={20} className="web-nav-globe" />
+            </div>
+            <span className="web-nav-status-indicator" />
           </div>
-          <div>
-            <h1 className="web-nav-title">
-              Nexus <span style={{ background: "linear-gradient(135deg, #2563eb, #0284c7)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Orchestrator</span>
-              <span className="web-badge-pro">ENTERPRISE 3D</span>
-            </h1>
-            <p className="web-nav-subtitle">Precision Robotic Control & Fleet Automation Portal</p>
+          <div className="web-nav-brand-text">
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <h1 className="web-nav-title">
+                Nexus <span className="web-nav-title-accent">Orchestrator</span>
+              </h1>
+              <span className="web-badge-pro">
+                <span className="web-badge-pulse" />
+                V3.4 • 144FPS
+              </span>
+            </div>
+            <p className="web-nav-subtitle">
+              Precision Robotic Fleet Engine • Active Orchestration Deck
+            </p>
           </div>
         </div>
 
         <div className="web-nav-actions">
-          <div className="web-node-connector" title="Target Robot Host IP & Port">
-            <Server size={14} color="#2563eb" />
+          {/* Cyber Node Capsule */}
+          <div className="web-node-connector" title="Target Robot Node Host IP & Port">
+            <div className="web-node-signal-wrap">
+              <span className={`web-node-ping-ring ${robotOnline ? "ping-active" : "ping-error"}`} />
+              <Server size={14} color="#2563eb" />
+            </div>
             <span className="web-node-label">NODE:</span>
             <input
               type="text"
@@ -286,42 +306,62 @@ export default function OrchestratorDashboard() {
               className="web-node-input"
               placeholder="http://10.10.10.50:8226"
             />
-            <SymbioteButton
-              variant="outline"
+            <button
+              type="button"
+              className="web-node-sync-btn"
               onClick={handleSaveRobotNodeUrl}
-              style={{ padding: "5px 12px", fontSize: "0.68rem" }}
+              title="Synchronize Node Pipeline"
             >
-              SYNC
-            </SymbioteButton>
+              <Zap size={10} />
+              <span>SYNC</span>
+            </button>
           </div>
 
-          <div className="web-status-badge">
-            <span className={`web-dot ${!robotOnline ? "offline" : isRobotBusy ? "busy" : "online"}`} />
-            <span>
-              {!robotOnline
-                ? "NODE OFFLINE"
-                : isRobotBusy
-                ? `HARVESTING • ETA ${formatTimeEta(totalWaitSeconds)}`
-                : "FLEET READY"}
+          {/* Cockpit Status Capsule */}
+          <div className={`web-status-badge ${!robotOnline ? "is-offline" : isRobotBusy ? "is-busy" : "is-online"}`}>
+            <span className="web-status-beacon">
+              <span className="web-status-radar-ring" />
+              <span className="web-dot-core" />
             </span>
+            <div className="web-status-text-wrap">
+              <span className="web-status-title">
+                {!robotOnline
+                  ? "SYSTEM OFFLINE"
+                  : isRobotBusy
+                  ? "ROBOT ACTIVE"
+                  : "FLEET READY"}
+              </span>
+              <span className="web-status-sub">
+                {!robotOnline
+                  ? "LINK SEVERED"
+                  : isRobotBusy
+                  ? `ETA ${formatTimeEta(totalWaitSeconds)}`
+                  : "LATENCY < 1ms"}
+              </span>
+            </div>
           </div>
 
+          {/* Executive Operator Profile Capsule */}
           <div className="web-user-profile">
-            <div className="web-avatar">{user.charAt(0).toUpperCase()}</div>
-            <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "#0f172a" }}>
-              {user}
-            </span>
-            <span className="web-role-tag">{isAdmin ? "ADMIN" : "OPERATOR"}</span>
+            <div className="web-avatar-ring">
+              <div className="web-avatar">{user.charAt(0).toUpperCase()}</div>
+              <span className="web-avatar-badge" />
+            </div>
+            <div className="web-user-info-text">
+              <span className="web-user-name">{user}</span>
+              <span className="web-role-tag">{isAdmin ? "SYS_ADMIN" : "OPERATOR"}</span>
+            </div>
           </div>
 
-          <SymbioteButton
-            variant="danger"
+          {/* Terminate Session Button */}
+          <button
+            type="button"
+            className="web-nav-logout-btn"
             onClick={logout}
             title="Terminate Active Session"
-            style={{ width: "40px", height: "40px", padding: 0, borderRadius: "12px" }}
           >
-            <LogOut size={16} />
-          </SymbioteButton>
+            <LogOut size={15} />
+          </button>
         </div>
       </nav>
 

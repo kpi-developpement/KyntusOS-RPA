@@ -14,8 +14,8 @@ interface HoloCard3DProps {
 export default function HoloCard3D({
   children,
   className = "",
-  depth = 14,
-  glowColor = "rgba(37, 99, 235, 0.4)",
+  depth = 16,
+  glowColor,
   isMacro = false,
   onClick,
 }: HoloCard3DProps) {
@@ -48,7 +48,6 @@ export default function HoloCard3D({
       card.style.setProperty("--gx", `${gx}%`);
       card.style.setProperty("--gy", `${gy}%`);
       card.style.setProperty("--g-opacity", "1");
-      card.style.setProperty("--card-scale", "1.03");
     });
   }, [depth]);
 
@@ -64,79 +63,80 @@ export default function HoloCard3D({
     card.style.setProperty("--rx", "0deg");
     card.style.setProperty("--ry", "0deg");
     card.style.setProperty("--g-opacity", "0");
-    card.style.setProperty("--card-scale", "1");
     setIsHovered(false);
   }, []);
 
-  // Cleanup RAF on unmount
   useEffect(() => {
     return () => {
       if (rafId.current) cancelAnimationFrame(rafId.current);
     };
   }, []);
 
-  const accentPrimary = isMacro ? "#0ea5e9" : "#3b82f6";
-  const accentSecondary = isMacro ? "#06b6d4" : "#2563eb";
+  const accentColor = isMacro ? "#0ea5e9" : "#2563eb";
+  const effectiveGlow = glowColor || (isMacro ? "rgba(14, 165, 233, 0.35)" : "rgba(37, 99, 235, 0.35)");
 
   return (
     <div
-      style={{ perspective: 1200 }}
-      className={`holo-card-perspective-wrapper ${className}`}
+      className={`transformer-card-assembly ${className}`}
       onClick={onClick}
     >
+      {/* 2D BASE CHASSIS — Anchored in 2D space beneath the ejected card */}
+      <div className={`transformer-base-chassis ${isMacro ? "macro-chassis" : "seq-chassis"}`}>
+        <div className="chassis-grid-pattern" />
+        <div className="chassis-dock-header">
+          <span className="chassis-stencil-code">// CHASSIS_BAY: #{isMacro ? "MACRO" : "WORKFLOW"}</span>
+          <span className="chassis-dock-status">DOCK_LOCKED</span>
+        </div>
+        <div className="chassis-circuit-lines" />
+        <div className="chassis-latches">
+          <span className="chassis-latch latch-tl" />
+          <span className="chassis-latch latch-tr" />
+          <span className="chassis-latch latch-bl" />
+          <span className="chassis-latch latch-br" />
+        </div>
+      </div>
+
+      {/* 3D TRANSFORMER ARMOR PLATE — Unlatches and ejects forward in 3D */}
       <div
         ref={cardRef}
         onMouseMove={handleMouseMove}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        className={`holo-card-body ${isMacro ? "macro-holo" : "seq-holo"} ${isHovered ? "is-hovered" : ""}`}
+        className={`holo-card-body transformer-prime-plate ${isMacro ? "macro-holo" : "seq-holo"} ${isHovered ? "is-ejected" : ""}`}
       >
-        {/* Holographic Shimmer Sweep — diagonal light that sweeps across on hover */}
-        <div className="holo-shimmer-sweep" />
-
-        {/* Dynamic Specular Glare — follows cursor position */}
+        {/* Dynamic Specular Sheen (Pure Monochromatic White-Blue Light) */}
         <div
           className="holo-glare-overlay"
           style={{
-            background: `radial-gradient(circle 320px at var(--gx, 50%) var(--gy, 50%), ${
-              isMacro ? "rgba(14, 165, 233, 0.28)" : "rgba(59, 130, 246, 0.32)"
-            }, transparent 75%)`,
+            background: `radial-gradient(circle 340px at var(--gx, 50%) var(--gy, 50%), ${
+              isMacro ? "rgba(14, 165, 233, 0.22)" : "rgba(37, 99, 235, 0.22)"
+            }, transparent 70%)`,
           }}
         />
 
-        {/* Prismatic Edge Border — rainbow on hover */}
-        <div className="holo-prismatic-border" />
+        {/* Monochromatic Laser Edge Line (Horizontal Scan) */}
+        <div
+          className="holo-laser-scan"
+          style={{
+            background: `linear-gradient(90deg, transparent, ${accentColor}, transparent)`,
+          }}
+        />
 
-        {/* Scanning Laser Line — horizontal scan on hover */}
-        <div className="holo-laser-scan" style={{ background: `linear-gradient(90deg, transparent, ${accentPrimary}, transparent)` }} />
+        {/* Crisp Monochromatic Cyber Brackets */}
+        <div className="holo-corner holo-corner-tl" style={{ borderColor: accentColor }} />
+        <div className="holo-corner holo-corner-tr" style={{ borderColor: accentColor }} />
+        <div className="holo-corner holo-corner-bl" style={{ borderColor: accentColor }} />
+        <div className="holo-corner holo-corner-br" style={{ borderColor: accentColor }} />
 
-        {/* Holographic Cyber Corners — expand on hover */}
-        <div className="holo-corner holo-corner-tl" style={{ borderColor: accentSecondary }} />
-        <div className="holo-corner holo-corner-tr" style={{ borderColor: accentSecondary }} />
-        <div className="holo-corner holo-corner-bl" style={{ borderColor: accentSecondary }} />
-        <div className="holo-corner holo-corner-br" style={{ borderColor: accentSecondary }} />
-
-        {/* Ambient Neon Edge Glow — outer shadow bloom */}
+        {/* Monochromatic Cyber Perimeter Glow */}
         <div
           className="holo-ambient-glow"
           style={{
-            boxShadow: `0 24px 50px -10px ${glowColor}, inset 0 1px 0 rgba(255, 255, 255, 0.6)`,
+            boxShadow: `0 24px 50px -10px ${effectiveGlow}, inset 0 1px 0 rgba(255, 255, 255, 0.9)`,
           }}
         />
 
-        {/* Floating Micro Particles on hover */}
-        {isHovered && (
-          <div className="holo-particles-container">
-            <div className="holo-particle p1" />
-            <div className="holo-particle p2" />
-            <div className="holo-particle p3" />
-            <div className="holo-particle p4" />
-            <div className="holo-particle p5" />
-            <div className="holo-particle p6" />
-          </div>
-        )}
-
-        {/* Card Content with 3D Layered Depth */}
+        {/* Card Content with True 3D Z-plane Layering */}
         <div className="holo-card-inner-3d">
           {children}
         </div>
