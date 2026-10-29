@@ -2,14 +2,20 @@ import axios from 'axios';
 import { Template, PlaybackStatus, AuthResponse } from '../types';
 
 // L'URL dyal l'Backend Spring Boot li fih l'Robot (Serveur f charika awla Worker Node)
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://10.10.10.50:9833/api/v1';
+const DEFAULT_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://10.10.10.25:9833/api/v1';
+
+// 🔥 Variable li ghadi tb9a tbeddel mnin twrek 3la SYNC
+let dynamicBaseUrl = DEFAULT_API_URL;
 
 const webApiClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: dynamicBaseUrl,
 });
 
-// Interceptor bach n-siftou l'token f kol requête Web
+// 🔥 Interceptor bach n-badlou l'URL f ay requête w n-siftou l'token
 webApiClient.interceptors.request.use((config) => {
+  // Kan-forciw l'URL jdid f kola requête
+  config.baseURL = dynamicBaseUrl;
+
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('nexus_web_token');
     if (token) {
@@ -18,6 +24,14 @@ webApiClient.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// 🔥 Hadi hya l'fonction li ghadi t3eyet liha mn l'Bouton SYNC
+export const syncAxiosNode = (newNodeUrl: string) => {
+  const cleanUrl = newNodeUrl.endsWith('/') ? newNodeUrl.slice(0, -1) : newNodeUrl;
+  // Kanzidou /api/v1 7it l'backend Java kaytsenaha
+  dynamicBaseUrl = `${cleanUrl}/api/v1`; 
+  console.log("🚀 [NEXUS SYNC] L'API kat-pointi daba 3la: ", dynamicBaseUrl);
+};
 
 export const orchestratorApi = {
   // --- AUTH ---
