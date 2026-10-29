@@ -1,20 +1,19 @@
 import axios from 'axios';
 import { Template, PlaybackStatus, AuthResponse } from '../types';
 
-// L'URL dyal l'Backend Spring Boot li fih l'Robot (Serveur f charika awla Worker Node)
-const DEFAULT_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://10.10.10.25:9833/api/v1';
+// 🔥 L'URL DABA HWA L'PROXY LI SAYBNA F NEXT.JS, MACHI L'PC DIRECT!
+const PROXY_API_URL = '/api/proxy';
 
-// 🔥 Variable li ghadi tb9a tbeddel mnin twrek 3la SYNC
-let dynamicBaseUrl = DEFAULT_API_URL;
+// Hada l'IP dyal l'Master API (Par defaut)
+let currentTargetNode = process.env.NEXT_PUBLIC_API_URL || 'http://10.10.10.25:9833';
 
 const webApiClient = axios.create({
-  baseURL: dynamicBaseUrl,
+  baseURL: PROXY_API_URL, // Axios dima kay-hder m3a l'serveur local dyalo
 });
 
-// 🔥 Interceptor bach n-badlou l'URL f ay requête w n-siftou l'token
 webApiClient.interceptors.request.use((config) => {
-  // Kan-forciw l'URL jdid f kola requête
-  config.baseURL = dynamicBaseUrl;
+  // 🔥 KANSAYFTOU L'IP DYAL L'PC F WA7D L'HEADER KHFII L'NEXT.JS BACH Y3REF FIN YSIFET
+  config.headers['x-target-node'] = currentTargetNode;
 
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('nexus_web_token');
@@ -25,12 +24,11 @@ webApiClient.interceptors.request.use((config) => {
   return config;
 });
 
-// 🔥 Hadi hya l'fonction li ghadi t3eyet liha mn l'Bouton SYNC
+// 🔥 L'FONCTION DYAL L'BOUTON "SYNC" DABA KAT-BEDDEL GHIR LA CIBLE DYAL L'PROXY
 export const syncAxiosNode = (newNodeUrl: string) => {
   const cleanUrl = newNodeUrl.endsWith('/') ? newNodeUrl.slice(0, -1) : newNodeUrl;
-  // Kanzidou /api/v1 7it l'backend Java kaytsenaha
-  dynamicBaseUrl = `${cleanUrl}/api/v1`; 
-  console.log("🚀 [NEXUS SYNC] L'API kat-pointi daba 3la: ", dynamicBaseUrl);
+  currentTargetNode = cleanUrl;
+  console.log("🚀 [NEXUS SYNC] L'Orchestrator ghadi y-proxy l'ordres l': ", currentTargetNode);
 };
 
 export const orchestratorApi = {
@@ -42,6 +40,7 @@ export const orchestratorApi = {
   
   // --- ORCHESTRATOR (WEB) ---
   getTemplates: async (): Promise<Template[]> => {
+    // Hadi ghat-wlli: /api/proxy/rpa/templates 
     const response = await webApiClient.get(`/rpa/templates`);
     return response.data;
   },
