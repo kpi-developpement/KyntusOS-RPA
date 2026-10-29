@@ -14,10 +14,11 @@ public class CorsConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
 
-        // 9bel mn ay blassa w ay IP
-        config.setAllowCredentials(false);
-        config.addAllowedOriginPattern("*");
+        // Khli ay blassa t-connecta (Next.js f port 3000)
+        config.addAllowedOrigin("*");
+        // Khli ga3 les headers idouzou
         config.addAllowedHeader("*");
+        // Khli ga3 les méthodes (GET, POST, OPTIONS, PUT, DELETE)
         config.addAllowedMethod("*");
 
         source.registerCorsConfiguration("/**", config);
