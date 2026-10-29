@@ -33,13 +33,10 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .cors(Customizer.withDefaults()) // 🔥 KAY-KHDEM B L'CORSCONFIG L9DIM DYALEK
+                .cors(Customizer.withDefaults()) // 🔥 Kay-linki m3a CorsConfig li 9adina lfo9
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // 🔥 KHLI GA3 LES PREFLIGHT YDOUZOU
-                        .requestMatchers("/api/v1/auth/**").permitAll()
-                        .requestMatchers("/api/v1/rpa/**").permitAll()
-                        .requestMatchers("/error").permitAll() // 🔥 FIX DYAL SPRING BOOT 3 (403 FORBIDDEN)
-                        .anyRequest().authenticated()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // 🔥 Kaykhli les preflight requests ydouzou bla mochkil
+                        .requestMatchers("/**").permitAll() // 🔥 7ellina l'biban kamlin l'Orchestrator w l'app desktop bach ydirou SYNC
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())

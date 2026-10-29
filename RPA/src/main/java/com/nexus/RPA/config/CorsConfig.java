@@ -14,11 +14,15 @@ public class CorsConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
 
-        // Khli ay blassa t-connecta (Next.js f port 3000)
-        config.addAllowedOrigin("*");
-        // Khli ga3 les headers idouzou
+        // 🔥 Khli ay IP t-connecta (mzyana l'reseau local dyalek)
+        config.setAllowCredentials(false);
+        config.addAllowedOriginPattern("*");
+
+        // 🔥 Khli ga3 les headers idouzou (darouriya l Private Network Access dyal Chrome)
         config.addAllowedHeader("*");
-        // Khli ga3 les méthodes (GET, POST, OPTIONS, PUT, DELETE)
+        config.addExposedHeader("*");
+
+        // 🔥 Khli ga3 les méthodes (GET, POST, OPTIONS, PUT, DELETE)
         config.addAllowedMethod("*");
 
         source.registerCorsConfiguration("/**", config);
