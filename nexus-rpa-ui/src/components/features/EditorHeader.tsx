@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Save, Terminal, Server, CheckCircle2, XCircle } from "lucide-react";
 import Button from "../ui/Button";
-import { syncAxiosNode, orchestratorApi } from "@/orchestrator/api"; // 👈 T2ked mn l'massar s7i7!
+import { syncAxiosNode, orchestratorApi } from "@/orchestrator/api";
 
 interface EditorHeaderProps {
   templateName: string;
@@ -18,17 +18,17 @@ export default function EditorHeader({ templateName, setTemplateName, recordingT
   const labelColor = isMacro ? "#059669" : "#2563eb";
   const placeholder = isMacro ? "e.g., PROC_LOGIN_SYSTEM" : "e.g., DAILY_INDICATORS_PIPELINE";
 
-  // 🔥 STATE DYAL L'SYNC M3A L'PC
+  // STATE DYAL L'SYNC M3A L'PC
   const [nodeIp, setNodeIp] = useState("http://10.10.125.37:9833");
   const [syncStatus, setSyncStatus] = useState<"IDLE" | "READY" | "OFFLINE" | "LOADING">("IDLE");
 
   const handleSyncNode = async () => {
     setSyncStatus("LOADING");
-    // 1. Forci l'Proxy y-sifet l had l'IP
+    // Forci l'Proxy y-sifet l had l'IP
     syncAxiosNode(nodeIp);
 
     try {
-      // 2. Sifet test (ping) l l'PC jdid bach tchouf wach hay wella miyet
+      // Sifet test (ping) l l'PC jdid bach tchouf wach hay wella miyet
       await orchestratorApi.getPlaybackStatus();
       setSyncStatus("READY");
     } catch (err) {
@@ -48,7 +48,7 @@ export default function EditorHeader({ templateName, setTemplateName, recordingT
       padding: '18px 28px', 
       marginBottom: '25px', 
       boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
-      maxWidth: '1200px', // Zedt f l'3erd chwya bach yhez l'input
+      maxWidth: '1200px',
       margin: '0 auto 25px auto'
     }}>
       
@@ -119,9 +119,17 @@ export default function EditorHeader({ templateName, setTemplateName, recordingT
           {syncStatus === "LOADING" ? "SYNCING..." : "SYNC"}
         </Button>
 
-        {/* STATUS INDICATOR */}
-        {syncStatus === "READY" && <CheckCircle2 size={18} color="#10b981" title="Fleet Ready" />}
-        {syncStatus === "OFFLINE" && <XCircle size={18} color="#ef4444" title="System Offline" />}
+        {/* STATUS INDICATOR - TS Fix: Wrapped in spans for title attribute */}
+        {syncStatus === "READY" && (
+          <span title="Fleet Ready" style={{ display: 'flex' }}>
+            <CheckCircle2 size={18} color="#10b981" />
+          </span>
+        )}
+        {syncStatus === "OFFLINE" && (
+          <span title="System Offline" style={{ display: 'flex' }}>
+            <XCircle size={18} color="#ef4444" />
+          </span>
+        )}
       </div>
 
       {/* RIGHT: ACTIONS */}
