@@ -1,0 +1,446 @@
+/* =====================================================================
+   NEXUS LUXE — 70% WHITE / 30% ROYAL BLUE · ZERO BLACK
+   Loaded right after globals.css (see app/layout.tsx). Applies to the
+   desktop Studio and is also loaded on the web routes.
+
+   1. Navy ink palette      every slate / near-black text becomes deep navy
+   2. Palette remap         generated, order-preserving `color` overrides
+   3. Inline-style remap    catches colours written in style={{...}}
+   4. Light veils           modal overlays are frosted white-blue, not dark
+   5. Desktop x100 layer    background, cards, DNA strip, editor, surfaces
+
+   Motion rule everywhere: only transform + opacity animate.
+   ===================================================================== */
+
+/* ═══════════════════════════ 1. NAVY INK ═══════════════════════════ */
+:root {
+  --nx-ink: #0a1f4f;      /* was #0f172a (slate-900, near black) */
+  --nx-ink-2: #13306b;    /* was #1e293b */
+  --nx-ink-3: #23427e;    /* was #334155 */
+  --nx-muted: #3a5689;    /* was #475569 */
+  --nx-muted-2: #5670a0;  /* was #64748b */
+  --nx-faint: #8ea3c8;    /* was #94a3b8 */
+
+  --nx-blue: #2563eb;
+  --nx-blue-deep: #1d4ed8;
+  --nx-sky: #0284c7;
+  --nx-sky-light: #38bdf8;
+  --nx-line: #dde7f8;     /* blue-tinted hairline */
+  --nx-surface: #ffffff;
+  --nx-surface-2: #f7faff;
+  --nx-shadow: 30, 64, 175; /* blue shadow base, used as rgba(var(--nx-shadow), a) */
+
+  /* globals.css tokens, re-pointed to the ink scale */
+  --text-primary: var(--nx-ink);
+  --text-secondary: var(--nx-ink-3);
+  --text-muted: var(--nx-muted-2);
+}
+
+::selection {
+  background: rgba(37, 99, 235, 0.18);
+  color: var(--nx-ink);
+}
+
+/* ══════════════ 2. PALETTE REMAP (generated from globals.css) ══════════════
+   For every specificity level, every `color` rule from the first remapped one
+   onward is re-emitted in original order, so hover/active/state rules keep
+   winning exactly like before — only the values changed. */
+.titlebar-btn { color: var(--nx-muted-2); }
+.prime-reactor-ring { color: var(--accent); }
+.prime-badge { color: var(--accent); }
+.prime-title { color: var(--nx-ink); }
+.prime-metric-chip { color: var(--nx-ink-3); }
+.prime-card:hover .prime-metric-chip { color: var(--nx-ink); }
+.prime-telemetry-header { color: var(--nx-muted-2); }
+.prime-telemetry-status { color: var(--accent); }
+.prime-thruster-btn { color: #ffffff; }
+.studio-count-pill { color: #2563eb; }
+.studio-time-pill { color: #0284c7; }
+.step-index-badge { color: #2563eb; }
+.step-coord-pill input { color: var(--nx-ink); }
+.step-sniper-btn { color: #2563eb; }
+.step-delay-pill input { color: #1d4ed8; }
+.step-delay-pill span { color: #2563eb; }
+.step-tool-btn { color: var(--nx-muted); }
+.step-tool-btn.duplicate:hover { color: #2563eb; }
+.step-tool-btn.delete:hover { color: #ef4444; }
+.step-arrows-group button { color: var(--nx-muted-2); }
+.drawer-label { color: #2563eb; }
+.step-param-drawer input { color: var(--nx-ink); }
+.drawer-browse-btn { color: #2563eb; }
+.drawer-path-text { color: var(--nx-muted); }
+.step-insert-Namespace button { color: #2563eb; }
+.step-insert-Namespace span { color: #bfdbfe; }
+.luxe-icon-btn { color: var(--nx-muted); }
+.luxe-icon-btn.danger:hover { color: #ef4444; }
+.luxe-step-num { color: #2563eb; }
+.luxe-step-name { color: var(--nx-ink-3); }
+.luxe-step-delay { color: #2563eb; }
+.luxe-secondary-btn { color: #2563eb; }
+.signature-badge { color: var(--nx-muted); }
+.signature-badge:hover { color: var(--nx-ink); }
+.btn-primary { color: #ffffff; }
+.btn-secondary { color: #2563eb; }
+.btn-danger { color: #ef4444; }
+.btn-success { color: #ffffff; }
+.btn-ghost { color: var(--nx-muted-2); }
+.btn-ghost:hover { color: var(--nx-ink); }
+.countdown { color: #2563eb; }
+.shortcut-drag-pill { color: #2563eb; }
+.orb-step-badge { color: #2563eb; }
+.orb-timer-readout { color: var(--nx-ink); }
+.command-online-tag { color: #2563eb; }
+.command-window-btn { color: #2563eb; }
+.command-icon-close { color: var(--nx-muted-2); }
+.quick-dock-btn.record-seq { color: #2563eb; }
+.quick-dock-btn.record-macro { color: #0284c7; }
+.command-search-box input { color: var(--nx-ink); }
+.clear-search-btn { color: #2563eb; }
+.command-tab { color: var(--nx-muted-2); }
+.command-tab.active-seq { color: #2563eb; }
+.command-tab.active-macro { color: #2563eb; }
+.item-play-badge { color: #2563eb; }
+.item-title { color: var(--nx-ink); }
+.item-meta { color: var(--nx-muted-2); }
+.item-run-pill { color: #2563eb; }
+.command-empty { color: var(--nx-faint); }
+.cockpit-tag { color: #2563eb; }
+.cockpit-percent { color: #2563eb; }
+.cockpit-title { color: var(--nx-ink); }
+.cockpit-label { color: var(--nx-muted-2); }
+.cockpit-val { color: #2563eb; }
+.cockpit-step-desc { color: var(--nx-ink-3); }
+.cockpit-btn.pause { color: #2563eb; }
+.cockpit-btn.resume { color: #ffffff; }
+.cockpit-btn.abort { color: #dc2626; }
+.command-footer { color: var(--nx-muted-2); }
+.sniper-countdown-text { color: #2563eb; }
+.sniper-click-text { color: #2563eb; }
+.prime-card:hover .prime-metric-chip { color: #1d4ed8; }
+.sci-holo-card:hover .web-meta-pill { color: #1d4ed8; }
+.titlebar-brand { color: var(--nx-muted-2); }
+.nx-hero-logo { color: #ffffff; }
+.nx-hero-title { color: var(--nx-ink); }
+.nx-hero-status { color: #2563eb; }
+.nx-hero-subtitle { color: var(--nx-muted); }
+.nx-hero-btn-ghost { color: #2563eb; }
+.nx-hero-btn-primary { color: #ffffff; }
+.library-empty { color: var(--nx-muted-2); }
+.nx-segmented-btn { color: var(--nx-muted-2); }
+.nx-segmented-btn:hover:not(.is-active) { color: var(--nx-ink-3); }
+.nx-segmented-btn.is-active { color: var(--nx-ink); }
+.nx-segmented-count { color: var(--nx-muted-2); }
+.nx-segmented-btn.is-active .nx-segmented-count { color: #2563eb; }
+.nx-ghost-chip { color: var(--nx-muted); }
+.nx-ghost-chip:hover { color: #1d4ed8; }
+.prime-card:hover .luxe-step-num { color: #ffffff; }
+.prime-more-row { color: var(--nx-muted-2); }
+.nx-select-current span { color: var(--nx-ink); }
+.nx-select-chevron { color: var(--nx-muted-2); }
+.nx-select.is-open .nx-select-chevron { color: #2563eb; }
+.nx-select-group-label { color: var(--nx-muted-2); }
+.nx-select-option { color: var(--nx-ink-3); }
+.nx-select-option:hover { color: var(--nx-ink); }
+.nx-select-option.is-selected { color: #1d4ed8; }
+.nx-merge-count { color: #ffffff; }
+.pipeline-url-index { color: white; }
+.luxe-input { color: var(--nx-ink); }
+.nx-playback-kicker { color: var(--nx-muted-2); }
+.nx-playback-title { color: var(--nx-ink); }
+.nx-playback-step { color: #2563eb; }
+.nx-playback-label { color: var(--nx-muted-2); }
+.nx-playback-desc { color: var(--nx-ink-2); }
+.nx-playback-eta { color: #b45309; }
+.command-list-item:hover .item-play-badge { color: #ffffff; }
+
+/* ═══════════════════ 3. INLINE-STYLE REMAP ═══════════════════
+   Components that write colours in style={{ color: '#0f172a' }}.
+   SSR serialises them as "color:#0f172a", client renders as
+   "color: rgb(15, 23, 42)" — both forms are matched. */
+[style*="color:#0f172a"], [style*="color: #0f172a"], [style*="color: rgb(15, 23, 42)"] { color: var(--nx-ink) !important; }
+[style*="color:#1e293b"], [style*="color: #1e293b"], [style*="color: rgb(30, 41, 59)"] { color: var(--nx-ink-2) !important; }
+[style*="color:#334155"], [style*="color: #334155"], [style*="color: rgb(51, 65, 85)"] { color: var(--nx-ink-3) !important; }
+[style*="color:#475569"], [style*="color: #475569"], [style*="color: rgb(71, 85, 105)"] { color: var(--nx-muted) !important; }
+[style*="color:#64748b"], [style*="color: #64748b"], [style*="color: rgb(100, 116, 139)"] { color: var(--nx-muted-2) !important; }
+[style*="color:#94a3b8"], [style*="color: #94a3b8"], [style*="color: rgb(148, 163, 184)"] { color: var(--nx-faint) !important; }
+
+/* lucide icons passed color="#64748b" etc. (rendered as a stroke attribute) */
+svg[stroke="#0f172a"] { stroke: var(--nx-ink); }
+svg[stroke="#475569"] { stroke: var(--nx-muted); }
+svg[stroke="#64748b"] { stroke: var(--nx-muted-2); }
+svg[stroke="#94a3b8"] { stroke: var(--nx-faint); }
+
+/* ═══════════════════ 4. LIGHT VEILS (no dark overlays) ═══════════════════ */
+.modal-overlay {
+  background:
+    radial-gradient(ellipse at 50% 38%, rgba(219, 234, 254, 0.72) 0%, rgba(239, 246, 255, 0.88) 70%) !important;
+}
+.modal-content {
+  border-color: #c7dbfb;
+  box-shadow:
+    0 40px 80px -24px rgba(var(--nx-shadow), 0.32),
+    0 0 0 1px rgba(37, 99, 235, 0.06);
+}
+.app-container {
+  box-shadow: inset 0 1px 0 #ffffff, 0 25px 60px rgba(var(--nx-shadow), 0.14);
+}
+.nx-select-popup {
+  border-color: #c7dbfb;
+  box-shadow: 0 28px 60px -14px rgba(var(--nx-shadow), 0.28), 0 8px 20px rgba(var(--nx-shadow), 0.08);
+}
+.nx-playback {
+  box-shadow: 0 22px 48px -10px rgba(var(--nx-shadow), 0.22), 0 0 0 1px rgba(37, 99, 235, 0.08);
+}
+
+/* ═══════════════════════ 5. DESKTOP x100 LAYER ═══════════════════════ */
+
+@keyframes nxShineSweep {
+  0%   { transform: translate3d(0%, 0, 0) skewX(-14deg); opacity: 0; }
+  45%  { opacity: 1; }
+  100% { transform: translate3d(178%, 0, 0) skewX(-14deg); opacity: 0; }
+}
+@keyframes nxDnaFlow {
+  0%   { transform: translate3d(-100%, 0, 0); }
+  100% { transform: translate3d(400%, 0, 0); }
+}
+
+/* ───────────── Background: blueprint grid ─────────────
+   Dots + every-4th-node "+" register marks are painted into ONE static layer
+   (multiple backgrounds) so the compositor only blends grid + canvas per frame. */
+.nx-bg-grid {
+  background-image:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='192' height='192'><path d='M6 2v8M2 6h8' stroke='%232563eb' stroke-opacity='0.2' stroke-width='1.2' stroke-linecap='round'/></svg>"),
+    radial-gradient(circle at center, rgba(96, 130, 196, 0.4) 1px, transparent 1.45px);
+  background-size: 192px 192px, 48px 48px;
+  background-position: -6px -6px, -24px -24px;
+}
+
+/* ───────────── Titlebar hairline ───────────── */
+.titlebar { border-bottom-color: var(--nx-line); }
+.titlebar::after {
+  content: "";
+  position: absolute;
+  left: 22px;
+  right: 22px;
+  bottom: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(37, 99, 235, 0.45), rgba(56, 189, 248, 0.45), transparent);
+  pointer-events: none;
+}
+
+/* ───────────── Hero ───────────── */
+.nx-hero {
+  border-color: #cfe0fb;
+  box-shadow: 0 24px 56px -22px rgba(var(--nx-shadow), 0.2), inset 0 1px 0 0 #ffffff;
+}
+.nx-hero-title { color: var(--nx-ink); }
+
+/* ═══════════════════════ CARDS (desktop) ═══════════════════════ */
+.prime-card {
+  background: linear-gradient(165deg, #ffffff 0%, var(--nx-surface-2) 100%);
+  border-color: var(--nx-line);
+  box-shadow:
+    0 4px 8px -2px rgba(var(--nx-shadow), 0.04),
+    0 14px 28px -8px rgba(var(--nx-shadow), 0.08),
+    inset 0 1px 0 0 #ffffff;
+}
+/* One layer does both jobs: the outer blue lift shadow AND the inner accent
+   frame (inset hairline + soft inner glow). Painted once, faded with opacity.
+   (A separate masked/rotating ring was measured at ~5ms per frame on
+   software-composited machines — not worth it.) */
+.prime-glow {
+  box-shadow:
+    0 32px 60px -20px rgba(var(--nx-shadow), 0.3),
+    0 0 0 1px rgba(37, 99, 235, 0.12),
+    inset 0 0 0 1.5px rgba(59, 130, 246, 0.5),
+    inset 0 0 22px -10px rgba(37, 99, 235, 0.4);
+}
+.prime-macro .prime-glow {
+  box-shadow:
+    0 32px 60px -20px rgba(2, 132, 199, 0.28),
+    0 0 0 1px rgba(2, 132, 199, 0.12),
+    inset 0 0 0 1.5px rgba(14, 165, 233, 0.5),
+    inset 0 0 22px -10px rgba(2, 132, 199, 0.4);
+}
+
+.prime-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+/* One-shot light sweep across the card when the pointer arrives.
+   No overflow clip (a rounded clip is another composited mask): the band
+   starts and ends transparent at the card edges instead. Exists only on hover. */
+.prime-shine {
+  display: none;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+.prime-shine::before {
+  content: "";
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  left: 0;
+  width: 36%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.75), rgba(219, 234, 254, 0.45), transparent);
+  transform: translate3d(0, 0, 0) skewX(-14deg);
+  opacity: 0;
+}
+.prime-card:hover .prime-shine { display: block; }
+.prime-card:hover .prime-shine::before { animation: nxShineSweep 1.1s var(--ease-out) 1; }
+
+/* Big faint type glyph that swings in on hover */
+.prime-watermark {
+  position: absolute;
+  right: -26px;
+  bottom: 74px;
+  color: var(--accent);
+  opacity: 0.035;
+  transform: rotate(-10deg) scale(0.9);
+  transition: opacity 0.5s ease, transform 0.9s var(--ease-out);
+  pointer-events: none;
+  z-index: 1;
+}
+.prime-card:hover .prime-watermark {
+  opacity: 0.075;
+  transform: rotate(0deg) scale(1);
+}
+
+/* Title: gradient underline grows from the left */
+.prime-title { color: var(--nx-ink); }
+.prime-title-text {
+  background-image: linear-gradient(90deg, var(--accent), #38bdf8);
+  background-size: 0% 2px;
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  padding-bottom: 3px;
+  transition: background-size 0.55s var(--ease-out);
+}
+.prime-card:hover .prime-title-text { background-size: 100% 2px; }
+
+/* ───────────── Pipeline DNA strip ───────────── */
+.prime-dna {
+  position: relative;
+  margin-bottom: 16px;
+  padding: 10px 12px 9px;
+  border-radius: 12px;
+  background: rgba(239, 246, 255, 0.6);
+  border: 1px solid #e3ecfb;
+  overflow: hidden;
+}
+.prime-dna::after {
+  /* travelling light over the strip (only exists while hovered) */
+  content: "";
+  display: none;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 26%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.85), transparent);
+  transform: translate3d(-100%, 0, 0);
+  pointer-events: none;
+}
+.prime-card:hover .prime-dna::after { display: block; animation: nxDnaFlow 1.6s var(--ease-std) 0.15s 1; }
+.prime-dna-track {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 10px;
+}
+.prime-dna-seg {
+  flex: 1;
+  height: 100%;
+  border-radius: 3px;
+  transform-origin: 50% 100%;
+  transform: scaleY(0.5);
+  opacity: 0.6;
+  transition: transform 0.5s var(--ease-spring), opacity 0.3s ease;
+  transition-delay: calc(var(--s, 0) * 14ms);
+}
+.prime-dna-seg.seg-click  { background: linear-gradient(180deg, #3b82f6, #1d4ed8); }
+.prime-dna-seg.seg-action { background: linear-gradient(180deg, #93c5fd, #60a5fa); }
+.prime-dna-seg.seg-macro  { background: linear-gradient(180deg, #38bdf8, #0284c7); }
+.prime-card:hover .prime-dna-seg { transform: scaleY(1); opacity: 1; }
+.prime-dna-legend {
+  display: flex;
+  gap: 12px;
+  margin-top: 7px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  font-weight: 700;
+}
+.dna-key { display: inline-flex; align-items: center; gap: 4px; }
+.dna-key.key-click  { color: #1d4ed8; }
+.dna-key.key-action { color: #3b82f6; }
+.dna-key.key-macro  { color: #0284c7; }
+
+.prime-empty-trace { font-size: 0.74rem; color: var(--nx-faint); padding: 6px 0; }
+
+/* telemetry + chips tinted into the blue family */
+.prime-telemetry-box { border-color: #e3ecfb; background: var(--nx-surface-2); }
+.prime-metric-chip { border-color: #e3ecfb; background: var(--nx-surface-2); }
+.luxe-icon-btn, .luxe-secondary-btn { border-color: #e3ecfb; }
+
+/* Run button: deeper royal gradient + glow halo on hover */
+.prime-thruster-btn.seq {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 55%, #1e40af 100%);
+}
+.prime-thruster-btn.macro {
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 55%, #0369a1 100%);
+}
+
+/* ═══════════════════════ STEP EDITOR ═══════════════════════ */
+.step-studio-container {
+  border-color: #d6e4fa;
+  box-shadow: 0 28px 64px -24px rgba(var(--nx-shadow), 0.16), inset 0 1px 0 #ffffff;
+}
+.step-luxe-row { border-color: var(--nx-line); }
+.step-luxe-row::before {
+  box-shadow: 0 16px 32px -12px rgba(var(--nx-shadow), 0.22);
+}
+/* left accent bar lights up along its length on hover */
+.step-luxe-row::after {
+  content: "";
+  position: absolute;
+  left: -3.5px;
+  top: 10px;
+  bottom: 10px;
+  width: 3.5px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #38bdf8, #2563eb);
+  transform: scaleY(0);
+  transform-origin: 50% 0;
+  transition: transform 0.45s var(--ease-out);
+  pointer-events: none;
+}
+.step-luxe-row:hover::after { transform: scaleY(1); }
+/* macro rows already use ::after for their "SYNC BLOCKING" badge — keep it */
+.step-luxe-row.type-macro::after {
+  left: auto;
+  top: -9px;
+  bottom: auto;
+  width: auto;
+  transform: none;
+  border-radius: 99px;
+  background: linear-gradient(135deg, #0284c7, #2563eb);
+}
+.step-index-badge { transition: transform 0.35s var(--ease-spring), background-color var(--t-fast) ease, color var(--t-fast) ease; }
+
+/* ═══════════════════════ MISC SURFACES ═══════════════════════ */
+.nx-merge-bar {
+  box-shadow: 0 24px 54px -14px rgba(var(--nx-shadow), 0.3), 0 0 0 1px rgba(59, 130, 246, 0.12);
+}
+.signature-badge { border-color: #cfe0fb; }
+.nx-segmented { background: rgba(219, 234, 254, 0.55); border-color: #d3e2fa; }
+.nx-ghost-chip { border-color: #dbe6f8; }
+
+/* Reduced motion: no light sweeps */
+@media (prefers-reduced-motion: reduce) {
+  .prime-shine::before, .prime-dna::after { animation: none !important; }
+}

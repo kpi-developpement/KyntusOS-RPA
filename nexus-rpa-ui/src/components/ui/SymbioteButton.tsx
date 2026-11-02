@@ -1,6 +1,16 @@
 "use client";
 
-import React, { useRef, useState, MouseEvent } from "react";
+/**
+ * SYMBIOTE BUTTON — magnetic glow button (web Orchestrator)
+ * ---------------------------------------------------------------------------
+ * Before: setState on EVERY mousemove (a React re-render per frame per button)
+ * and the glow moved with left/top (layout per frame).
+ * Now: zero re-renders while hovering. The glow position is written as CSS
+ * vars once per animation frame and moved with transform (compositor only).
+ * Same props, same variants.
+ */
+
+import React, { useCallback, useRef, MouseEvent } from "react";
 import { motion, HTMLMotionProps } from "framer-motion";
 
 interface SymbioteButtonProps extends Omit<HTMLMotionProps<"button">, "ref"> {
@@ -14,27 +24,34 @@ export default function SymbioteButton({
   style,
   disabled,
   className = "",
+  onMouseMove,
   ...props
 }: SymbioteButtonProps) {
   const btnRef = useRef<HTMLButtonElement | null>(null);
-  const [coords, setCoords] = useState({ x: 0, y: 0 });
-  const [isHovered, setIsHovered] = useState(false);
+  const raf = useRef(0);
+  const pos = useRef({ x: 0, y: 0 });
+
+  const flush = useCallback(() => {
+    raf.current = 0;
+    const el = btnRef.current;
+    if (!el) return;
+    el.style.setProperty("--bx", `${pos.current.x}px`);
+    el.style.setProperty("--by", `${pos.current.y}px`);
+  }, []);
 
   const handleMouseMove = (e: MouseEvent<HTMLButtonElement>) => {
-    if (!btnRef.current || disabled) return;
-    const rect = btnRef.current.getBoundingClientRect();
-    setCoords({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    });
+    onMouseMove?.(e);
+    if (disabled) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    pos.current.x = e.clientX - rect.left;
+    pos.current.y = e.clientY - rect.top;
+    if (!raf.current) raf.current = requestAnimationFrame(flush);
   };
 
   return (
     <motion.button
       ref={btnRef}
       onMouseMove={handleMouseMove}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
       whileHover={disabled ? undefined : { y: -2, scale: 1.02 }}
       whileTap={disabled ? undefined : { y: 1, scale: 0.97 }}
       transition={{ type: "spring", stiffness: 450, damping: 25 }}
@@ -43,23 +60,14 @@ export default function SymbioteButton({
       style={style}
       {...props}
     >
-      {/* Dynamic Magnetic Spotlight Follower */}
-      {isHovered && !disabled && (
-        <span
-          className="luxe-symbiote-radial-glow"
-          style={{
-            left: `${coords.x}px`,
-            top: `${coords.y}px`,
-          }}
-        />
-      )}
+      {/* Magnetic spotlight (always mounted, faded by CSS on hover) */}
+      {!disabled && <span className="luxe-symbiote-radial-glow" />}
 
-      {/* Shimmer Wave */}
+      {/* Shimmer wave */}
       {(variant === "blue" || variant === "emerald" || variant === "cyber") && !disabled && (
         <span className="luxe-symbiote-shimmer" />
       )}
 
-      {/* Button Content */}
       <span className="luxe-symbiote-content">{children}</span>
     </motion.button>
   );

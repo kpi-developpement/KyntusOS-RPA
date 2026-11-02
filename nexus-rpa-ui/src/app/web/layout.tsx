@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./web.css";
+import "./web-turbo.css"; // must stay AFTER web.css — it overrides it
 import { WebAuthProvider } from "@/contexts/WebAuthContext";
+import ScrollChoreographer from "@/components/web/ScrollChoreographer";
 
 export const metadata: Metadata = {
   title: "Nexus Orchestrator",
@@ -16,6 +18,7 @@ export default function WebLayout({
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
       <WebAuthProvider>
         {children}
+        <ScrollChoreographer />
       </WebAuthProvider>
     </div>
   );

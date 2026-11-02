@@ -7,7 +7,7 @@
     "frontendDist": "../out",
     "devUrl": "http://localhost:3644",
     "beforeDevCommand": "npm run dev",
-    "beforeBuildCommand": "npm run build"
+    "beforeBuildCommand": "npm run build:desktop"
   },
   "app": {
     "windows": [
@@ -15,8 +15,11 @@
         "fullscreen": false,
         "resizable": true,
         "title": "NexusRPA",
-        "width": 1200,
-        "height": 800,
+        "width": 1280,
+        "height": 840,
+        "minWidth": 110,
+        "minHeight": 95,
+        "center": true,
         "decorations": false,
         "transparent": true
       }
@@ -27,7 +30,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": ["nsis", "msi"],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

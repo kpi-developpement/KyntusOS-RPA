@@ -37,6 +37,17 @@ const getHeaders = () => {
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
+/**
+ * Status de-duplication.
+ * The dashboard polls /play/status every 750ms and stores the result in React
+ * state. A brand-new object every poll forced a full dashboard re-render
+ * (cards, KPIs, sparklines) even when nothing changed. Returning the SAME
+ * object reference when the payload is identical lets React skip the render
+ * entirely — no change needed in page.tsx.
+ */
+let lastStatusJson = "";
+let lastStatus: PlaybackStatus | null = null;
+
 export const webApi = {
   // ==========================================
   // MASTER SERVER CALLS (Auth & DB)
@@ -99,7 +110,7 @@ export const webApi = {
   // WORKER NODE CALLS (Execution on PC)
   // ==========================================
   playTemplate: async (name: string): Promise<PlayTriggerResponse> => {
-    // ⚠️ Hna kan-siftou l'ordre l'PC Physique
+    // Hna kan-siftou l'ordre l'PC Physique
     const res = await axios.post(
       `${getRobotBaseUrl()}/api/v1/rpa/play/${encodeURIComponent(name)}`,
       {},
@@ -119,6 +130,10 @@ export const webApi = {
       headers: getHeaders(),
       timeout: 2500,
     });
+    const json = JSON.stringify(res.data);
+    if (lastStatus && json === lastStatusJson) return lastStatus; // same ref → no re-render
+    lastStatusJson = json;
+    lastStatus = res.data;
     return res.data;
   },
 

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./nexus-luxe.css"; // must stay AFTER globals.css — navy palette + x100 layer
 
 export const metadata: Metadata = {
   title: "Nexus RPA Studio",
@@ -13,10 +14,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      {/* 7YEDNA BG-SLATE-900 BACH TAURI YKOUN TRANSPARENT 100% */}
-      <body className="antialiased text-slate-50 bg-transparent">
-        {children}
-      </body>
+      {/* body stays transparent so the Tauri window can keep its rounded, see-through frame */}
+      <body className="antialiased bg-transparent">{children}</body>
     </html>
   );
 }

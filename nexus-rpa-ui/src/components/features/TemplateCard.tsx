@@ -1,7 +1,7 @@
 "use client";
 
-import React, { memo, useCallback, useRef } from "react";
-import { Template } from "@/types";
+import React, { memo, useCallback, useMemo, useRef } from "react";
+import { Template, Step } from "@/types";
 import {
   Play,
   Edit3,
@@ -13,6 +13,8 @@ import {
   Check,
   Terminal,
   Sparkles,
+  MousePointer2,
+  Zap,
 } from "lucide-react";
 
 interface TemplateCardProps {
@@ -27,6 +29,46 @@ interface TemplateCardProps {
 }
 
 const MAX_TILT = 3.2; // degrees — subtle, enterprise
+const DNA_SEGMENTS = 28; // max bars in the pipeline strip
+
+type StepKind = "click" | "action" | "macro";
+
+const kindOf = (s: Step): StepKind =>
+  s.type === "CLICK"
+    ? "click"
+    : s.type === "MACRO" || s.actionName?.startsWith("CUSTOM_PROC_")
+    ? "macro"
+    : "action";
+
+/**
+ * Pipeline "DNA": one bar per step (or per bucket of steps when the workflow
+ * is long), coloured by step kind. Gives the structure of a workflow at a
+ * glance — clicks vs keyboard/system actions vs nested macros.
+ */
+function buildDna(steps: Step[]) {
+  const counts = { click: 0, action: 0, macro: 0 };
+  steps.forEach((s) => counts[kindOf(s)]++);
+
+  if (steps.length === 0) return { bars: [] as StepKind[], counts };
+  if (steps.length <= DNA_SEGMENTS) return { bars: steps.map(kindOf), counts };
+
+  // bucket long workflows: each bar shows the dominant kind of its slice
+  const bars: StepKind[] = [];
+  const per = steps.length / DNA_SEGMENTS;
+  for (let b = 0; b < DNA_SEGMENTS; b++) {
+    const slice = steps.slice(Math.floor(b * per), Math.floor((b + 1) * per));
+    const c = { click: 0, action: 0, macro: 0 };
+    slice.forEach((s) => c[kindOf(s)]++);
+    bars.push(
+      c.macro >= c.click && c.macro >= c.action && c.macro > 0
+        ? "macro"
+        : c.click >= c.action
+        ? "click"
+        : "action"
+    );
+  }
+  return { bars, counts };
+}
 
 function TemplateCard({
   template,
@@ -47,6 +89,7 @@ function TemplateCard({
   const isMacro = template.name.startsWith("PROC_");
   const steps = template.steps || [];
   const totalDuration = steps.reduce((acc, s) => acc + (s.delay || 0), 0);
+  const dna = useMemo(() => buildDna(steps), [steps]);
 
   // rAF-throttled pointer tracking: max 1 style write per frame, rect cached on enter
   const flush = useCallback(() => {
@@ -93,33 +136,34 @@ function TemplateCard({
     el.style.setProperty("--ry", "0deg");
   }, []);
 
+  const WatermarkIcon = isMacro ? Layers : Cpu;
+
   return (
     <div
       ref={cardRef}
       onPointerEnter={handlePointerEnter}
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
-      onWheel={() => { rectRef.current = null; /* list scrolled → re-measure on next move */ }}
+      onWheel={() => {
+        rectRef.current = null; /* list scrolled → re-measure on next move */
+      }}
       className={`prime-card ${isMacro ? "prime-macro" : ""} ${isSelected ? "prime-selected" : ""}`}
       style={{ "--i": Math.min(index, 12) } as React.CSSProperties}
     >
-      {/* GPU Specular Spotlight + glow shadow layer (opacity-only transitions) */}
+      {/* ── decorative GPU layers (transform / opacity only) ── */}
       <div className="prime-glow" />
       <div ref={spotRef} className="prime-spotlight" />
+      <div className="prime-shine" aria-hidden="true" />
       <div className="prime-top-beam" />
       <div className="prime-wing-tl" />
       <div className="prime-wing-br" />
+      <div className="prime-watermark" aria-hidden="true">
+        <WatermarkIcon size={150} strokeWidth={1} />
+      </div>
 
-      {/* Top Section: Header & Quick Actions */}
+      {/* ── Top Section: Header & Quick Actions ── */}
       <div style={{ position: "relative", zIndex: 2 }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "18px",
-          }}
-        >
+        <div className="prime-header">
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             {!isMacro && onToggleSelect && (
               <div
@@ -160,20 +204,48 @@ function TemplateCard({
 
         {/* Title & Key Metrics */}
         <h3 className="prime-title" title={template.name}>
-          {template.name}
+          <span className="prime-title-text">{template.name}</span>
         </h3>
 
-        <div className="prime-metrics-bar" style={{ marginBottom: "18px" }}>
+        <div className="prime-metrics-bar" style={{ marginBottom: "16px" }}>
           <div className="prime-metric-chip">
             {isMacro ? <Layers size={13} color="#0284c7" /> : <Cpu size={13} color="#2563eb" />}
             <span>{steps.length} Steps</span>
           </div>
 
           <div className="prime-metric-chip">
-            <Clock size={13} color="#64748b" />
+            <Clock size={13} color="#3b82f6" />
             <span>~{totalDuration.toFixed(1)}s</span>
           </div>
         </div>
+
+        {/* Pipeline DNA strip */}
+        {dna.bars.length > 0 && (
+          <div className="prime-dna" title="Pipeline structure">
+            <div className="prime-dna-track">
+              {dna.bars.map((kind, i) => (
+                <span
+                  key={i}
+                  className={`prime-dna-seg seg-${kind}`}
+                  style={{ "--s": i } as React.CSSProperties}
+                />
+              ))}
+            </div>
+            <div className="prime-dna-legend">
+              <span className="dna-key key-click">
+                <MousePointer2 size={10} /> {dna.counts.click}
+              </span>
+              <span className="dna-key key-action">
+                <Zap size={10} /> {dna.counts.action}
+              </span>
+              {dna.counts.macro > 0 && (
+                <span className="dna-key key-macro">
+                  <Layers size={10} /> {dna.counts.macro}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Live Telemetry Step Preview */}
         <div className="prime-telemetry-box">
@@ -188,7 +260,7 @@ function TemplateCard({
           </div>
 
           {steps.length === 0 ? (
-            <div style={{ fontSize: "0.74rem", color: "#94a3b8", padding: "6px 0" }}>No steps recorded</div>
+            <div className="prime-empty-trace">No steps recorded</div>
           ) : (
             steps.slice(0, 3).map((step, idx) => (
               <div key={idx} className="luxe-preview-row" style={{ "--r": idx } as React.CSSProperties}>
@@ -216,7 +288,7 @@ function TemplateCard({
         </div>
       </div>
 
-      {/* Bottom Thruster Controls */}
+      {/* ── Bottom Thruster Controls ── */}
       <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", gap: "8px" }}>
         <button onClick={() => onPlay(template.name)} className={`prime-thruster-btn ${isMacro ? "macro" : "seq"}`}>
           <div className="luxe-btn-shimmer" />
