@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Square, Radio } from "lucide-react";
 import Button from "../ui/Button";
 
@@ -17,15 +17,21 @@ export default function RecordingOverlay({ countdown, isRecording, onStop }: Rec
     <div className="overlay">
       <div>
         {countdown > 0 ? (
-          <motion.div
-            key={countdown}
-            initial={{ scale: 0.5, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 1.5, opacity: 0 }}
-            className="countdown"
-          >
-            {countdown}
-          </motion.div>
+          <div className="countdown-stage">
+            <AnimatePresence mode="popLayout">
+              <motion.div
+                key={countdown}
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 1.6, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 380, damping: 22 }}
+                className="countdown"
+              >
+                {countdown}
+              </motion.div>
+            </AnimatePresence>
+            <span key={`ring-${countdown}`} className="countdown-ring" />
+          </div>
         ) : (
           <motion.div 
             initial={{ opacity: 0, y: 20 }} 

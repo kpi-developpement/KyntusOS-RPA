@@ -19,7 +19,7 @@ export default function EditorHeader({ templateName, setTemplateName, recordingT
   const placeholder = isMacro ? "e.g., PROC_LOGIN_SYSTEM" : "e.g., DAILY_INDICATORS_PIPELINE";
 
   // STATE DYAL L'SYNC M3A L'PC
-  const [nodeIp, setNodeIp] = useState("http://10.10.125.37:9833");
+  const [nodeIp, setNodeIp] = useState("http://10.10.125.29:9833");
   const [syncStatus, setSyncStatus] = useState<"IDLE" | "READY" | "OFFLINE" | "LOADING">("IDLE");
 
   const handleSyncNode = async () => {

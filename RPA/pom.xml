@@ -82,6 +82,13 @@
 							<artifactId>lombok</artifactId>
 						</exclude>
 					</excludes>
+					<!-- 🔥 FIX DYAL JNativeHook URI is not hierarchical -->
+					<requiresUnpack>
+						<dependency>
+							<groupId>com.github.kwhat</groupId>
+							<artifactId>jnativehook</artifactId>
+						</dependency>
+					</requiresUnpack>
 				</configuration>
 			</plugin>
 		</plugins>

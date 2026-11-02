@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { memo, useCallback, useRef } from "react";
 import { Template } from "@/types";
 import {
   Play,
@@ -17,6 +17,7 @@ import {
 
 interface TemplateCardProps {
   template: Template;
+  index?: number;
   isSelected?: boolean;
   onToggleSelect?: (name: string) => void;
   onPlay: (name: string) => void;
@@ -25,8 +26,11 @@ interface TemplateCardProps {
   onDelete: (id: number) => void;
 }
 
-export default function TemplateCard({
+const MAX_TILT = 3.2; // degrees — subtle, enterprise
+
+function TemplateCard({
   template,
+  index = 0,
   isSelected = false,
   onToggleSelect,
   onPlay,
@@ -35,30 +39,76 @@ export default function TemplateCard({
   onDelete,
 }: TemplateCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
+  const spotRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef(0);
+  const rectRef = useRef<DOMRect | null>(null);
+  const ptrRef = useRef({ x: 0, y: 0 });
+
   const isMacro = template.name.startsWith("PROC_");
   const steps = template.steps || [];
   const totalDuration = steps.reduce((acc, s) => acc + (s.delay || 0), 0);
 
-  // Zero-Reflow Spotlight Update via requestAnimationFrame
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  // rAF-throttled pointer tracking: max 1 style write per frame, rect cached on enter
+  const flush = useCallback(() => {
+    rafRef.current = 0;
+    const el = cardRef.current;
+    const rect = rectRef.current;
+    if (!el || !rect) return;
+    const x = ptrRef.current.x - rect.left;
+    const y = ptrRef.current.y - rect.top;
+    const px = x / rect.width - 0.5; // -0.5 .. 0.5
+    const py = y / rect.height - 0.5;
+    // spotlight vars go on the spotlight itself (not the card) so a mouse move
+    // invalidates style for 1 element instead of the whole card subtree
+    const spot = spotRef.current;
+    if (spot) {
+      spot.style.setProperty("--mx", `${x}px`);
+      spot.style.setProperty("--my", `${y}px`);
+    }
+    el.style.setProperty("--rx", `${(-py * MAX_TILT).toFixed(2)}deg`);
+    el.style.setProperty("--ry", `${(px * MAX_TILT).toFixed(2)}deg`);
+  }, []);
+
+  const handlePointerEnter = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    rectRef.current = e.currentTarget.getBoundingClientRect();
+  }, []);
+
+  const handlePointerMove = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      ptrRef.current.x = e.clientX;
+      ptrRef.current.y = e.clientY;
+      if (!rectRef.current) rectRef.current = e.currentTarget.getBoundingClientRect();
+      if (!rafRef.current) rafRef.current = requestAnimationFrame(flush);
+    },
+    [flush]
+  );
+
+  const handlePointerLeave = useCallback(() => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = 0;
+    rectRef.current = null;
     const el = cardRef.current;
     if (!el) return;
-    const rect = el.getBoundingClientRect();
-    el.style.setProperty("--mx", `${e.clientX - rect.left}px`);
-    el.style.setProperty("--my", `${e.clientY - rect.top}px`);
-  };
+    el.style.setProperty("--rx", "0deg");
+    el.style.setProperty("--ry", "0deg");
+  }, []);
 
   return (
     <div
       ref={cardRef}
-      onMouseMove={handleMouseMove}
-      className={`prime-card ${isMacro ? "prime-macro" : ""} ${
-        isSelected ? "prime-selected" : ""
-      }`}
+      onPointerEnter={handlePointerEnter}
+      onPointerMove={handlePointerMove}
+      onPointerLeave={handlePointerLeave}
+      onWheel={() => { rectRef.current = null; /* list scrolled → re-measure on next move */ }}
+      className={`prime-card ${isMacro ? "prime-macro" : ""} ${isSelected ? "prime-selected" : ""}`}
+      style={{ "--i": Math.min(index, 12) } as React.CSSProperties}
     >
-      {/* GPU Specular Spotlight */}
-      <div className="prime-spotlight" />
+      {/* GPU Specular Spotlight + glow shadow layer (opacity-only transitions) */}
+      <div className="prime-glow" />
+      <div ref={spotRef} className="prime-spotlight" />
       <div className="prime-top-beam" />
+      <div className="prime-wing-tl" />
+      <div className="prime-wing-br" />
 
       {/* Top Section: Header & Quick Actions */}
       <div style={{ position: "relative", zIndex: 2 }}>
@@ -79,37 +129,29 @@ export default function TemplateCard({
                 }}
                 className={`luxe-checkbox ${isSelected ? "checked" : ""}`}
                 title="Select for Pipeline Merge"
+                role="checkbox"
+                aria-checked={isSelected}
               >
-                {isSelected && <Check size={13} color="#ffffff" strokeWidth={3} />}
+                <Check size={13} color="#ffffff" strokeWidth={3} className="luxe-check-icon" />
               </div>
             )}
 
             <div className="prime-badge">
               <span className="prime-dot" />
-              <span className="prime-badge-default">
-                {isMacro ? "SUB-ROUTINE" : "WORKFLOW"}
-              </span>
-              <span className="prime-badge-hover">
-                ID #{String(template.id || 0).padStart(3, "0")}
+              <span className="prime-badge-swap">
+                <span className="prime-badge-default">{isMacro ? "SUB-ROUTINE" : "WORKFLOW"}</span>
+                <span className="prime-badge-hover">ID #{String(template.id || 0).padStart(3, "0")}</span>
               </span>
             </div>
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <button
-              onClick={() => onEdit(template)}
-              className="luxe-icon-btn"
-              title="Edit Sequence"
-            >
+            <button onClick={() => onEdit(template)} className="luxe-icon-btn" title="Edit Sequence">
               <Edit3 size={13} />
               <span>Edit</span>
             </button>
             {template.id && (
-              <button
-                onClick={() => onDelete(template.id!)}
-                className="luxe-icon-btn danger"
-                title="Delete"
-              >
+              <button onClick={() => onDelete(template.id!)} className="luxe-icon-btn danger" title="Delete">
                 <Trash2 size={13} />
               </button>
             )}
@@ -123,11 +165,7 @@ export default function TemplateCard({
 
         <div className="prime-metrics-bar" style={{ marginBottom: "18px" }}>
           <div className="prime-metric-chip">
-            {isMacro ? (
-              <Layers size={13} color="#0284c7" />
-            ) : (
-              <Cpu size={13} color="#2563eb" />
-            )}
+            {isMacro ? <Layers size={13} color="#0284c7" /> : <Cpu size={13} color="#2563eb" />}
             <span>{steps.length} Steps</span>
           </div>
 
@@ -143,16 +181,17 @@ export default function TemplateCard({
             <span style={{ display: "flex", alignItems: "center", gap: "5px" }}>
               <Terminal size={11} /> EXECUTION TRACE
             </span>
-            <span className="prime-telemetry-status">READY</span>
+            <span className="prime-telemetry-status">
+              <span className="prime-telemetry-led" />
+              READY
+            </span>
           </div>
 
           {steps.length === 0 ? (
-            <div style={{ fontSize: "0.74rem", color: "#94a3b8", padding: "6px 0" }}>
-              No steps recorded
-            </div>
+            <div style={{ fontSize: "0.74rem", color: "#94a3b8", padding: "6px 0" }}>No steps recorded</div>
           ) : (
             steps.slice(0, 3).map((step, idx) => (
-              <div key={idx} className="luxe-preview-row">
+              <div key={idx} className="luxe-preview-row" style={{ "--r": idx } as React.CSSProperties}>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", overflow: "hidden" }}>
                   <span className="luxe-step-num">{idx + 1}</span>
                   <span className="luxe-step-name">
@@ -169,17 +208,7 @@ export default function TemplateCard({
           )}
 
           {steps.length > 3 && (
-            <div
-              style={{
-                fontSize: "0.68rem",
-                color: "#64748b",
-                fontWeight: 700,
-                paddingTop: "4px",
-                borderTop: "1px dashed #e2e8f0",
-                display: "flex",
-                justifyContent: "space-between",
-              }}
-            >
+            <div className="prime-more-row">
               <span>+{steps.length - 3} additional operations</span>
               <Sparkles size={11} color="#2563eb" />
             </div>
@@ -188,33 +217,23 @@ export default function TemplateCard({
       </div>
 
       {/* Bottom Thruster Controls */}
-      <div
-        style={{
-          position: "relative",
-          zIndex: 2,
-          display: "flex",
-          flexDirection: "column",
-          gap: "8px",
-        }}
-      >
-        <button
-          onClick={() => onPlay(template.name)}
-          className={`prime-thruster-btn ${isMacro ? "macro" : "seq"}`}
-        >
+      <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", gap: "8px" }}>
+        <button onClick={() => onPlay(template.name)} className={`prime-thruster-btn ${isMacro ? "macro" : "seq"}`}>
           <div className="luxe-btn-shimmer" />
-          <div style={{ display: "flex", alignItems: "center", gap: "9px" }}>
-            <Play size={15} fill="currentColor" />
-            <span className="btn-text-normal">Run Automation</span>
-            <span className="btn-text-prime">EXECUTE SEQUENCE</span>
+          <div className="prime-thruster-label">
+            <span className="prime-thruster-icon">
+              <Play size={15} fill="currentColor" />
+            </span>
+            <span className="btn-text-swap">
+              <span className="btn-text-normal">Run Automation</span>
+              <span className="btn-text-prime">EXECUTE SEQUENCE</span>
+            </span>
           </div>
           <div className="prime-exec-tag">RUN</div>
         </button>
 
         {!isMacro && (
-          <button
-            onClick={() => onBatchPlay(template.name)}
-            className="luxe-secondary-btn"
-          >
+          <button onClick={() => onBatchPlay(template.name)} className="luxe-secondary-btn">
             <FolderPlus size={14} />
             <span>Batch Multi-File Execution</span>
           </button>
@@ -223,3 +242,5 @@ export default function TemplateCard({
     </div>
   );
 }
+
+export default memo(TemplateCard);
