@@ -47,8 +47,8 @@ export default function CustomSelect({ value, onChange, options }: CustomSelectP
   return (
     <div className="relative w-[300px]" ref={dropdownRef}>
       <div 
-        className={`flex items-center justify-between bg-black/80 border px-4 py-2.5 rounded-lg transition-all duration-300 ${getColorClass(selectedOption.type)} hover:bg-black`}
-        style={{ fontFamily: "'Fira Code', monospace", fontSize: '13px', boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.5)', cursor: 'none' }}
+        className={`flex items-center justify-between bg-white border px-4 py-2.5 rounded-lg transition-all duration-300 ${getColorClass(selectedOption.type)} hover:bg-blue-50`}
+        style={{ fontFamily: "'Fira Code', monospace", fontSize: '13px', boxShadow: 'inset 0 2px 10px rgba(37,99,235,0.06)', cursor: 'none' }}
         onClick={() => setIsOpen(!isOpen)}
       >
         <div className="flex items-center gap-2">
@@ -67,7 +67,7 @@ export default function CustomSelect({ value, onChange, options }: CustomSelectP
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="absolute top-full left-0 w-full mt-2 bg-[#0a0a0f] border border-blue-500/20 rounded-lg shadow-[0_10px_40px_rgba(0,0,0,0.9)] z-50 overflow-hidden"
+            className="absolute top-full left-0 w-full mt-2 bg-white border border-blue-200 rounded-lg shadow-[0_10px_40px_rgba(37,99,235,0.18)] z-50 overflow-hidden"
           >
             <div className="max-h-64 overflow-y-auto py-2 custom-scrollbar">
               {options.map((option) => {

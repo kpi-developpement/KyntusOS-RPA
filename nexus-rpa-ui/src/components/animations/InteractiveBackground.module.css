@@ -7,8 +7,7 @@
   z-index: -1;
   overflow: hidden;
   pointer-events: none;
-  /* HADI HIYA LI FIXAT L'MOUCHKIL DYAL L'PC LI KAY-BAN */
-  background-color: #02040a !important; 
+  background-color: #f0f7ff !important;
 }
 
 .ambientGlow {
@@ -18,7 +17,7 @@
   transform: translate(-50%, -50%);
   width: 80vw;
   height: 80vh;
-  background: rgba(37, 99, 235, 0.12);
+  background: rgba(37, 99, 235, 0.08);
   filter: blur(120px);
   border-radius: 50%;
   animation: pulseGlow 4s infinite alternate ease-in-out;
